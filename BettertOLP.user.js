@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.1
+// @version      1.1.1
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -13,7 +13,7 @@
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
-var btversion = 1.1;
+var btversion = "1.1.1";
 
 var items = [
     "Never use single solid tiles.",
@@ -242,7 +242,7 @@ loadScript("https://rawgit.com/hydrabolt/discord.js/webpack/discord.master.js",
         if (guildvar !== null) {
             if (oldmsg.channel.id === channelvar.id) {
                 $("#" + oldmsg.id + " .content")[0].textContent = newmsg.content;
-                $(".edited")[0].textContent = " (edited)";
+                $("#" + oldmsg.id + " .edited")[0].textContent = " (edited)";
             }
         }
     });
