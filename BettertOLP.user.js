@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.1.1
+// @version      1.2
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -13,7 +13,7 @@
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
-var btversion = "1.1.1";
+var btversion = "1.2";
 
 var items = [
     "Never use single solid tiles.",
@@ -22,7 +22,6 @@ var items = [
     "Make sure your rooms are at a consistent difficulty."
 ];
 var item = items[Math.floor(Math.random()*items.length)];
-$( "#boardindex_table" ).prepend("Tips: " + item + "<br><br>");
 
 var bettertolplink = "https://tolp.nl/forum/index.php?topic=3809";
 function openNav() {
@@ -55,12 +54,12 @@ GM_config.init(
                 'type': 'text', // Makes this setting a text field
                 'default': ']' // Default value if user doesn't change it
             },
-            //'theme': {
-            //    'label': 'Theme', // Appears next to field
-            //    'type': 'radio', // Makes this setting a series of radio elements
-            //    'options': ['Blue', 'Mint', 'Red', 'Dark'], // Possible choices
-            //    'default': 'Blue' // Default value if user doesn't change it
-            //},
+            'theme': {
+                'label': 'Theme', // Appears next to field
+                'type': 'radio', // Makes this setting a series of radio elements
+                'options': ['Disabled', 'Rain'], // Possible choices
+                'default': 'Blue' // Default value if user doesn't change it
+            },
             'dtoken': {
                 //'label': 'Discord token', // Appears next to field
                 'type': 'hidden', // Makes this setting hidden
@@ -91,7 +90,7 @@ function open(){
 var beforeuser = GM_config.get('beforeuser');
 var afteruser = GM_config.get('afteruser');
 var dtoken = GM_config.get('dtoken');
-//var theme = GM_config.get('theme');
+var theme = GM_config.get('theme');
 var avatart = GM_config.get('avatart');
 
 (function() {
@@ -221,7 +220,7 @@ loadScript("https://rawgit.com/hydrabolt/discord.js/webpack/discord.master.js",
                 } else {
                     displayname = escapeHTML(msg.author.username, true);
                 }
-                $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<span class="message" id="' + msg.id + '"><span class="author" style="color:' + color + ';">' + displayname + '</span><span>: <span class="content">' + escapeHTML(msg.cleanContent, true).autoLink() + '</span><span class="edited" style="color:#AAA; font-size: 70%;"></span></span></span><br>');
+                $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<span class="message" id="' + msg.id + '"><span class="author" style="color:' + color + ';">' + displayname + '</span><span>: <span class="mcontent">' + escapeHTML(msg.cleanContent, true).autoLink() + '</span><span class="edited" style="color:#AAA; font-size: 70%;"></span></span></span><br>');
                 if (msg.attachments.array()[0] !== undefined) {
                     if (checkURL(msg.attachments.array()[0].url)) {
                         //$('.shoutboximg').css("max-width", "%50");
@@ -241,7 +240,7 @@ loadScript("https://rawgit.com/hydrabolt/discord.js/webpack/discord.master.js",
     client.on('messageUpdate', (oldmsg, newmsg) => {
         if (guildvar !== null) {
             if (oldmsg.channel.id === channelvar.id) {
-                $("#" + oldmsg.id + " .content")[0].textContent = newmsg.content;
+                $("#" + oldmsg.id + " .mcontent")[0].textContent = newmsg.content;
                 $("#" + oldmsg.id + " .edited")[0].textContent = " (edited)";
             }
         }
@@ -269,78 +268,205 @@ try {
 
 //$(".reset .copyright a")[3].textContent = $(".reset .copyright a")[3].textContent + "\nHey Vsauce, Michael here.";
 $("#footer_section .frame ul").append('<li><a href="' + bettertolplink + '">BettertOLP v' + btversion + ' by Alexia.</a></li>');
-(function() {
-    'use strict';
-    GM_addStyle('.poster h4 a::before {content:"' + beforeuser + '"} .poster h4 a::after {content:"' + afteruser + '"}');
-    // GM_addStyle('.copyright a:nth-of-type(3)::after {content:"BettertOLP by Alexia"; display: block; white-space: pre-wrap;}');
-    switch(avatart) {
-        case "Circle":
-            GM_addStyle('img.avatar {border-radius: 50%;}');
-            break;
-    }
-    //switch(theme) {
-    //    case "Mint":
-    //        GM_addStyle('.header_main {background: url(https://atlas.is-pretty.sexy/c563cb.png)}');
-    //        GM_addStyle('.header_nav {background: url(https://atlas.is-pretty.sexy/6535e8.png)}');
-    //        GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i.imgur.com/ESzz8Yz.png)}');
-    //        GM_addStyle('.header_topbar {background: url(https://atlas.is-pretty.sexy/2c2a56.png)}');
-    //        GM_addStyle('.button_submit, .quick_search_token_submit_input {background-color: #2aa969}');
-    //        GM_addStyle('body {background-color: #a0c6a8}');
-    //        GM_addStyle('a.subject {color: #2aa969!important} ');
-    //        GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://atlas.is-pretty.sexy/507f23.png)!important}');
-    //        GM_addStyle('.button_strip_markread, .button_strip_markread span.last {background-image: url(https://atlas.is-pretty.sexy/49e643.png)!important}');
-    //        GM_addStyle('.buttonlist ul li a, .buttonlist ul li a span {background-image: url(https://atlas.is-pretty.sexy/49e643.png)!important}');
-    //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #33663e}');
-    //        GM_addStyle('.poster h4 a {color: #269d62}');
-    //        GM_addStyle('ul.topnav li ul.subnav {background: #055933;border: 1px solid #042f15}');
-    //        GM_addStyle('ul.topnav li ul.subnav li {border-top: 1px solid #1c854b;border-bottom: 1px solid #16663d}');
-    //        GM_addStyle('html ul.topnav li ul.subnav li:hover {background: #0d7136}');
-    //        GM_addStyle('blockquote.bbc_standard_quote {background-color: #cff5cc}');
-    //        GM_addStyle('blockquote.bbc_alternate_quote {background-color: #d9f9ce}');
-    //        GM_addStyle('.dropmenu li a.firstlevel:hover span.firstlevel, .dropmenu li:hover a.firstlevel span.firstlevel, .dropmenu li a.firstlevel:hover, .dropmenu li:hover a.firstlevel, .dropmenu li a.active span.firstlevel, .dropmenu li a.active, .dropmenu li ul {background-image: url(https://atlas.is-pretty.sexy/ba1a28.png)}');
-    //        GM_addStyle('.dropmenu li li a:hover, .dropmenu li li:hover>a {background: #188668}');
-    //        GM_addStyle('.title_bar, tr.catbg th.first_th, .catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background-image: url(https://atlas.is-pretty.sexy/507f23.png)!important}');
-    //        $(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
-    //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
-    //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').attr("src","https://atlas.is-pretty.sexy/98a1f5.png");
-    //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').attr("src","https://atlas.is-pretty.sexy/905f8b.png");
-    //        break;
-    //    case "Red":
-    //        GM_addStyle('tr.catbg, .header_main, .header_nav, ul#menu_nav li.backLava, .header_topbar, .cat_bar, .title_barIC, .button_strip_markread, .buttonlist ul li a {filter: hue-rotate(150deg)}');
-    //        GM_addStyle('.catbg, ul#menu_nav li.backLava, .button_strip_markread span.last, .titlebg, .buttonlist ul li a span {filter: hue-rotate(350deg)}');
-    //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #633}');
-    //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #9d2626}');
-    //        GM_addStyle('body {background-color: #c6a0a0}');
-    //        $(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
-    //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').css({filter: "hue-rotate(150deg)"});
-    //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
-    //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
-    //        break;
-    //    case "Dark":
-    //        //GM_addStyle('tr.catbg, .header_main, .header_nav, ul#menu_nav li.backLava, .header_topbar, .cat_bar, .title_barIC, .button_strip_markread, .buttonlist ul li a {filter: hue-rotate(150deg)}');
-    //        //GM_addStyle('.catbg, ul#menu_nav li.backLava, .button_strip_markread span.last, .titlebg, .buttonlist ul li a span {filter: hue-rotate(350deg)}');
-    //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #ececec;}');
-    //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #9d2626}');
-    //        GM_addStyle('body {background-color: rgb(60, 60, 60)}');
-    //        GM_addStyle('#content_section {background: #5a5a5a}');
-    //        GM_addStyle('body, td, th, tr {color: #fff}');
-    //        GM_addStyle('tr.windowbg td, tr.windowbg2 td, tr.approvebg td, tr.highlight2 td {background-color: #676767}');
-    //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #ccffc9!important}');
-    //        GM_addStyle('.table_list tbody.content td.children {color: #d0d0d0}');
-    //        GM_addStyle('.windowbg, #preview_body {background-color: #777777}');
-    //        GM_addStyle('.roundframe {background: #888888}');
-    //        GM_addStyle('.header_main {background: url(https://atlas.is-pretty.cool/c02c39.png)}');
-    //        GM_addStyle('.header_nav {background: url(https://atlas.is-pretty.cool/993716.png)}');
-    //        GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i.imgur.com/ESzz8Yz.png)}');
-    //        GM_addStyle('.header_topbar {background: url(https://atlas.is-pretty.cool/f7785d.png)}');
-    //        GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://atlas.is-pretty.cool/9feaac.png)!important}');
-    //$(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
-    //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').css({filter: "hue-rotate(150deg)"});
-    //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
-    //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
-    //        break;
-    //}
-})();
+
+GM_addStyle('.poster h4 a::before {content:"' + beforeuser + '"} .poster h4 a::after {content:"' + afteruser + '"}');
+// GM_addStyle('.copyright a:nth-of-type(3)::after {content:"BettertOLP by Alexia"; display: block; white-space: pre-wrap;}');
+switch(avatart) {
+    case "Circle":
+        GM_addStyle('img.avatar {border-radius: 50%;}');
+        break;
+}
+switch(theme) {
+    case "Rain":
+        //<td class="normal nowrap"><small><span>Views: </span><span>559,902,130</span><br><span>Time: </span><span><span data-nomodify="">2017-08-21 17:33:47</span></span></small></td><td class="normal center"><small>17 users online: <img src="/images/coin.gif" alt="o" title="User donated $8.00">&nbsp;<a href="/?p=profile&amp;id=6549" style="color: #97acef;" class="un">1UPdudes</a>, <a href="/?p=profile&amp;id=8691" style="color: #f185c9;" class="un">Akaginite</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=9964" style="color: #701820;" class="un">Blind Devil</a>, <a href="/?p=profile&amp;id=1980" style="color: #7c60b0;" class="un">Conal</a>, <a href="/?p=profile&amp;id=32234" style="color: #7c60b0;" class="un">Flap master</a>, <a href="/?p=profile&amp;id=306" style="color: #7c60b0;" class="un">Golden Yoshi</a>, <img src="/images/coin.gif" alt="o" title="User donated $50.00">&nbsp;<a href="/?p=profile&amp;id=3471" style="color: #9E197F;" class="un">imamelia</a>, <a href="/?p=profile&amp;id=768" style="color: #7c60b0;" class="un">Kaijyuu</a>, <a href="/?p=profile&amp;id=27645" style="color: #97acef;" class="un">Luansilva12</a>, <a href="/?p=profile&amp;id=27129" style="color: rgb(0, 210, 210);" class="un">Luigi_master1</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.50">&nbsp;<a href="/?p=profile&amp;id=28554" style="color: #97acef;" class="un">Mathos</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=20309" style="color: #E80055;" class="un">Mirann</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=2512" style="color: #744496;" class="un">Nameless</a>, <a href="/?p=profile&amp;id=23778" style="color: #97acef;" class="un">NGB</a>, <a href="/?p=profile&amp;id=27479" style="color: #97acef;" class="un">ThalesMangaka</a>, <a href="/?p=profile&amp;id=9" style="color: #97acef;" class="un">trackftv</a>, <a href="/?p=profile&amp;id=16921" style="color: #7c60b0;" class="un">Wind Fish</a> - Guests: 36 - Bots: 213</small></td><td class="normal right nowrap"><small>Users: 32,234 (1,476 active)<br>Latest: <a href="/?p=profile&amp;id=32234" style="color: #7c60b0;" class="un">Flap master</a></small></td>
+        $(`<table cellpadding="3" cellspacing="3" width="100%"><tr>
+<td height="50">
+<table cellpadding="0" cellspacing="0" width="100%" style="border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;">
+<tbody><tr>
+</tr>
+<tr>
+<td>
+<table cellpadding="0" cellspacing="0" width="100%" class="text" style="border-bottom: 1px solid #000000;">
+<tbody><tr>
+<td class="normal nowrap"><small><span>BettertOLP Version ` + btversion + `</span><br><span>Time: </span><span><span class="currenttime"></span></span></small></td><td class="normal center"><small><span class=usernum></span> online: <span class=membersonline></span>- Guests: <span class="guestcount"></span> - Bots: <span class="botcount"></span></small></td><td class="normal right nowrap"><small>Users: <span class="usercount"></span> (<span class="perconline"></span> online)<br>Latest: <span class="latestmember"></span></small></td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+</tr>
+<tr>
+<td>
+<table cellpadding="0" cellspacing="0" width="100%" class="text" style="border-bottom: 1px solid #000000;">
+<tbody><tr>
+<td class="rope">Tip: ` + item + `</td><td class="rope right nowrap">Logged in as <span class="musername"></script>.</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+</tr>
+</tbody></table>
+</td>
+</tr></table>`).insertAfter($(".header")[0]);
+        var currentdate = new Date();
+        var datetime = currentdate.getDate() + "-" + (currentdate.getMonth()+1)  + "-" + currentdate.getFullYear() + " " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+        $(".currenttime")[0].textContent = datetime;
+        var musername = $(".floatleft")[0].textContent.trim().split(" |")[0].split("Hello ")[1];
+        $(".musername")[0].textContent = musername;
+        $.get( "https://tolp.nl/forum/SSI.php?ssi_function=whosOnline", function( data ) {
+            $(".membersonline").html(data);
+            var memberlist = [];
+            for (var i = 0; i < $(".membersonline a").length; i++) {
+                memberlist.push($(".membersonline a")[i]);
+                //console.log($(".membersonline a")[i]);
+            }
+            //stuff
+            var guests = $(".membersonline")[0].textContent.trim().split(" ")[0];
+            $(".guestcount")[0].textContent = guests;
+            var userson = $(".membersonline")[0].textContent.trim().split(", ")[1].split(" (")[0].toLowerCase();
+            $(".usernum")[0].textContent = userson;
+            var botsonline = $(".membersonline")[0].textContent.trim().split(", ")[2].split(" ")[0];
+            $(".botcount")[0].textContent = botsonline;
+            $(".membersonline").html("");
+            for (var a = 0; a < memberlist.length; a++) {
+                $(".membersonline").append(memberlist[a]);
+                if (a !== memberlist.length - 1) {
+                    $(".membersonline").append(", ");
+                } else {
+                    $(".membersonline").append(" ");
+                }
+            }
+        });
+        $.get( "https://tolp.nl/forum/SSI.php?ssi_function=latestMember", function( data ) {
+            $(".latestmember").html(data);
+            $(".latestmember").html($(".latestmember a"));
+        });
+        $.get( "https://tolp.nl/forum/SSI.php?ssi_function=boardStats", function( data ) {
+            $(".usercount").html(data);
+            $(".usercount").html($(".usercount a"));
+            var outOff = $(".usercount")[0].textContent;
+            var value = $(".usernum")[0].textContent.split(" ")[0];
+            var resulta = (value * 100) / outOff;
+            var result = Math.round(resulta);
+            $(".perconline")[0].textContent = result.toString() + '%';
+        });
+        $('#wrapper').attr('style','width: 100%');
+        $('table.table_list tr').each(function(){
+            if($(this).children('td:empty').length === $(this).children('td').length){
+                $(this).remove(); // or $(this).hide();
+            }
+        });
+        GM_addStyle('blockquote.bbc_standard_quote {background-color: rgba(119, 119, 119, 0.3);}');
+        GM_addStyle('blockquote.bbc_alternate_quote {background-color: rgba(103, 103, 103, 0.30);}');
+        GM_addStyle('.catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background: hsla(225, 30%, 35%, 0.65);}');
+        GM_addStyle('tr.catbg th.first_th {background: hsla(225, 30%, 35%, 0.65);}');
+        GM_addStyle('tr.catbg th.last_th {background: hsla(225, 30%, 35%, 0.65);}');
+        GM_addStyle('h4.titlebg, h3.titlebg {background: none;padding-bottom: 0px;}');
+        GM_addStyle('div.title_bar {background: hsla(225, 30%, 25%, 0.65);padding-right: 9px;margin-right: 0px;margin-bottom: 0px;}');
+        GM_addStyle('.spoiler_head {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
+        GM_addStyle('.spoiler_body {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
+        GM_addStyle('.description, .description_board, .plainbox {border: none; background: hsla(225, 30%, 25%, 0.65);}');
+        GM_addStyle('#forumposts .cat_bar {margin: 0 0 0 0;}');
+        GM_addStyle('span.topslice, span.botslice, span.topslice span, span.botslice span {background: none!important;}');
+        GM_addStyle('input, button, select, textarea {background: hsla(225, 30%, 25%, 0.65);}');
+        GM_addStyle('div.title_barIC h4.titlebg {background: none;}');
+        GM_addStyle('div.title_barIC {background: hsla(225, 30%, 25%, 0.65);}');
+        GM_addStyle('.roundframe {background: none; border-left: none; border-right: none;}');
+        GM_addStyle('span.upperframe, span.upperframe span, span.lowerframe, span.lowerframe span {background: none;}');
+        GM_addStyle('.buttonlist ul li a span {background: none;}');
+        GM_addStyle('.buttonlist ul li a {color: #99FF99; background: none;}');
+        GM_addStyle('.buttonlist ul li a:hover span {background: none;}');
+        GM_addStyle('.buttonlist ul li a:hover {background: none;}');
+        GM_addStyle('.windowbg, #preview_body {background-color: hsla(225, 40%, 12%, 0.7);}');
+        GM_addStyle('#forumposts .windowbg, #preview_body {border: 1px solid #000000;}');
+        GM_addStyle('.header {width: 95%; margin: auto;}');
+        GM_addStyle(".table_list {background-color: black;border-spacing: 1px;}");
+        GM_addStyle('.windowbg2 {background-color: hsla(225, 40%, 12%, 0.7); border: 1px solid #000000;}');
+        GM_addStyle('#forumposts .windowbg2 {border-top: none;}');
+        GM_addStyle('tr.windowbg td, tr.windowbg2 td, tr.approvebg td, tr.highlight2 td {background-color: hsla(225, 40%, 12%, 0.7);}');
+        GM_addStyle('h3.catbg a:link, h3.catbg a:visited, h4.catbg a:link, h4.catbg a:visited, h3.catbg, .table_list tbody.header td, .table_list tbody.header td a {color: #6B8AC7;}');
+        GM_addStyle('h4.catbg, h4.catbg2, h3.catbg, h3.catbg2, .table_list tbody.header td.catbg {background: none;}');
+        GM_addStyle('div.cat_bar {background: hsla(225, 30%, 25%, 0.65);margin-right: 0px;}');
+        GM_addStyle('#content_section {background: rgba(0,0,0,0);padding: 0 10px;}');
+        GM_addStyle('td.normal {background: hsla(225, 40%, 18%, 0.7);}');
+        GM_addStyle('td.normal {padding: 2px 4px !important;}');
+        GM_addStyle('td.rope {padding: 4px 5px 4px; background: hsla(225, 40%, 12%, 0.7);}');
+        GM_addStyle('.right {text-align: right;}');
+        GM_addStyle('.center {text-align: center;}');
+        GM_addStyle('.nowrap {white-space: nowrap;}');
+        GM_addStyle('body {background: #14192A url(https://www.smwcentral.net/html/rainscheme/rainbg.jpg)!important}');
+        GM_addStyle('.table_list tbody.content td.info a.subject, a.new_win:link, a.new_win:visited, a:link, a:visited, a {color: hsl(225, 50%, 65%); font-weight: bold!important; text-decoration: none!important;}');
+        GM_addStyle('a:hover  {color: hsl(225, 50%, 90%)!important;}');
+        GM_addStyle('.header_topbar {background: hsla(225, 30%, 35%, 0.65); border: 1px solid #000000; border-bottom: none;}');
+        GM_addStyle('.header_main {background: hsla(225, 40%, 18%, 0.7); border: 1px solid #000000; border-top: none;}');
+        GM_addStyle('.header_nav {background: hsla(225, 40%, 12%, 0.7); border: 1px solid #000000; border-top: none;}');
+        break;
+    case "Default":
+        $( "#boardindex_table" ).prepend("Tips: " + item + "<br><br>");
+        break;
+        //    case "Mint":
+        //        GM_addStyle('.header_main {background: url(https://atlas.is-pretty.sexy/c563cb.png)}');
+        //        GM_addStyle('.header_nav {background: url(https://atlas.is-pretty.sexy/6535e8.png)}');
+        //        GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i.imgur.com/ESzz8Yz.png)}');
+        //        GM_addStyle('.header_topbar {background: url(https://atlas.is-pretty.sexy/2c2a56.png)}');
+        //        GM_addStyle('.button_submit, .quick_search_token_submit_input {background-color: #2aa969}');
+        //        GM_addStyle('body {background-color: #a0c6a8}');
+        //        GM_addStyle('a.subject {color: #2aa969!important} ');
+        //        GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://atlas.is-pretty.sexy/507f23.png)!important}');
+        //        GM_addStyle('.button_strip_markread, .button_strip_markread span.last {background-image: url(https://atlas.is-pretty.sexy/49e643.png)!important}');
+        //        GM_addStyle('.buttonlist ul li a, .buttonlist ul li a span {background-image: url(https://atlas.is-pretty.sexy/49e643.png)!important}');
+        //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #33663e}');
+        //        GM_addStyle('.poster h4 a {color: #269d62}');
+        //        GM_addStyle('ul.topnav li ul.subnav {background: #055933;border: 1px solid #042f15}');
+        //        GM_addStyle('ul.topnav li ul.subnav li {border-top: 1px solid #1c854b;border-bottom: 1px solid #16663d}');
+        //        GM_addStyle('html ul.topnav li ul.subnav li:hover {background: #0d7136}');
+        //        GM_addStyle('blockquote.bbc_standard_quote {background-color: #cff5cc}');
+        //        GM_addStyle('blockquote.bbc_alternate_quote {background-color: #d9f9ce}');
+        //        GM_addStyle('.dropmenu li a.firstlevel:hover span.firstlevel, .dropmenu li:hover a.firstlevel span.firstlevel, .dropmenu li a.firstlevel:hover, .dropmenu li:hover a.firstlevel, .dropmenu li a.active span.firstlevel, .dropmenu li a.active, .dropmenu li ul {background-image: url(https://atlas.is-pretty.sexy/ba1a28.png)}');
+        //        GM_addStyle('.dropmenu li li a:hover, .dropmenu li li:hover>a {background: #188668}');
+        //        GM_addStyle('.title_bar, tr.catbg th.first_th, .catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background-image: url(https://atlas.is-pretty.sexy/507f23.png)!important}');
+        //        $(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
+        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
+        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').attr("src","https://atlas.is-pretty.sexy/98a1f5.png");
+        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').attr("src","https://atlas.is-pretty.sexy/905f8b.png");
+        //        break;
+        //    case "Red":
+        //        GM_addStyle('tr.catbg, .header_main, .header_nav, ul#menu_nav li.backLava, .header_topbar, .cat_bar, .title_barIC, .button_strip_markread, .buttonlist ul li a {filter: hue-rotate(150deg)}');
+        //        GM_addStyle('.catbg, ul#menu_nav li.backLava, .button_strip_markread span.last, .titlebg, .buttonlist ul li a span {filter: hue-rotate(350deg)}');
+        //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #633}');
+        //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #9d2626}');
+        //        GM_addStyle('body {background-color: #c6a0a0}');
+        //        $(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
+        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').css({filter: "hue-rotate(150deg)"});
+        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
+        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
+        //        break;
+        //    case "Dark":
+        //        //GM_addStyle('tr.catbg, .header_main, .header_nav, ul#menu_nav li.backLava, .header_topbar, .cat_bar, .title_barIC, .button_strip_markread, .buttonlist ul li a {filter: hue-rotate(150deg)}');
+        //        //GM_addStyle('.catbg, ul#menu_nav li.backLava, .button_strip_markread span.last, .titlebg, .buttonlist ul li a span {filter: hue-rotate(350deg)}');
+        //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #ececec;}');
+        //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #9d2626}');
+        //        GM_addStyle('body {background-color: rgb(60, 60, 60)}');
+        //        GM_addStyle('#content_section {background: #5a5a5a}');
+        //        GM_addStyle('body, td, th, tr {color: #fff}');
+        //        GM_addStyle('tr.windowbg td, tr.windowbg2 td, tr.approvebg td, tr.highlight2 td {background-color: #676767}');
+        //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #ccffc9!important}');
+        //        GM_addStyle('.table_list tbody.content td.children {color: #d0d0d0}');
+        //        GM_addStyle('.windowbg, #preview_body {background-color: #777777}');
+        //        GM_addStyle('.roundframe {background: #888888}');
+        //        GM_addStyle('.header_main {background: url(https://atlas.is-pretty.cool/c02c39.png)}');
+        //        GM_addStyle('.header_nav {background: url(https://atlas.is-pretty.cool/993716.png)}');
+        //        GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i.imgur.com/ESzz8Yz.png)}');
+        //        GM_addStyle('.header_topbar {background: url(https://atlas.is-pretty.cool/f7785d.png)}');
+        //        GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://atlas.is-pretty.cool/9feaac.png)!important}');
+        //$(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
+        //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').css({filter: "hue-rotate(150deg)"});
+        //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
+        //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
+        //        break;
+}
 function asdf(){
     if (document.body.scrollTop > 100){
         $('.header_nav').css('position','fixed').css('top','0');
