@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.2
+// @version      1.2.1
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -13,13 +13,14 @@
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
-var btversion = "1.2";
+var btversion = "1.2.1";
 
 var items = [
     "Never use single solid tiles.",
     "Remember to align your rooms!",
     "Don't have too much backtracking. It gets boring.",
-    "Make sure your rooms are at a consistent difficulty."
+    "Make sure your rooms are at a consistent difficulty.",
+    "Use <span><a href='https://tolp.nl/forum/index.php?topic=1719.0'>Ved</a></span>!"
 ];
 var item = items[Math.floor(Math.random()*items.length)];
 
@@ -315,7 +316,7 @@ switch(theme) {
         $(".currenttime")[0].textContent = datetime;
         var musername = $(".floatleft")[0].textContent.trim().split(" |")[0].split("Hello ")[1];
         $(".musername")[0].textContent = musername;
-        $.get( "https://tolp.nl/forum/SSI.php?ssi_function=whosOnline", function( data ) {
+        var get1 = $.get( "https://tolp.nl/forum/SSI.php?ssi_function=whosOnline", function( data ) {
             $(".membersonline").html(data);
             var memberlist = [];
             for (var i = 0; i < $(".membersonline a").length; i++) {
@@ -339,13 +340,15 @@ switch(theme) {
                 }
             }
         });
-        $.get( "https://tolp.nl/forum/SSI.php?ssi_function=latestMember", function( data ) {
+        var get2 = $.get( "https://tolp.nl/forum/SSI.php?ssi_function=latestMember", function( data ) {
             $(".latestmember").html(data);
             $(".latestmember").html($(".latestmember a"));
         });
-        $.get( "https://tolp.nl/forum/SSI.php?ssi_function=boardStats", function( data ) {
+        var get3 = $.get( "https://tolp.nl/forum/SSI.php?ssi_function=boardStats", function( data ) {
             $(".usercount").html(data);
             $(".usercount").html($(".usercount a"));
+        });
+        $.when(get1, get2, get3).done(function() {
             var outOff = $(".usercount")[0].textContent;
             var value = $(".usernum")[0].textContent.split(" ")[0];
             var resulta = (value * 100) / outOff;
@@ -358,6 +361,7 @@ switch(theme) {
                 $(this).remove(); // or $(this).hide();
             }
         });
+        GM_addStyle('.stickybg2, .stickybg {background: rgba(130, 90, 90, 0.30);}');
         GM_addStyle('blockquote.bbc_standard_quote {background-color: rgba(119, 119, 119, 0.3);}');
         GM_addStyle('blockquote.bbc_alternate_quote {background-color: rgba(103, 103, 103, 0.30);}');
         GM_addStyle('.catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background: hsla(225, 30%, 35%, 0.65);}');
