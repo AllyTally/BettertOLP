@@ -1,20 +1,43 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.2.1
+// @version      1.3
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
 // @match        https://tolp.nl/forum/*
-// @require      https://openuserjs.org/src/libs/sizzle/GM_config.js
+// @match        http://tolptheme.hol.es/*
+// @match        http://distractionware.com/forum/*
+// @require      https://rawgit.com/sizzlemctwizzle/GM_config/master/gm_config.js
+// @require      https://code.jquery.com/jquery-3.2.1.js
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_log
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
-var btversion = "1.2.1";
+var btversion = "1.3";
 
+//if (window.location.href.split("://")[1] === "tolp.nl/bettertolp.html") {
+//    $("body").html = "<h1>Changelog:</h1><br>+Added this page";
+//}
+
+
+var dware = false;
+var tolp = false;
+var foruma = window.location.origin+window.location.pathname.split("index.php")[0];
+var forum = foruma.split("://")[1];
+switch(forum) {
+    case "distractionware.com/forum/":
+        var dware = true;
+        break;
+    case "tolp.nl/forum/":
+        var tolp = true;
+        break;
+    case "tolptheme.hol.es/":
+        var tolp = true;
+        break;
+}
 var items = [
     "Never use single solid tiles.",
     "Remember to align your rooms!",
@@ -27,6 +50,7 @@ var item = items[Math.floor(Math.random()*items.length)];
 var bettertolplink = "https://tolp.nl/forum/index.php?topic=3809";
 function openNav() {
     document.getElementById("settingsoverlay").style.height = "100%";
+    $("iframe")[0].style.height = "40%";
 }
 
 function closeNav() {
@@ -42,6 +66,7 @@ GM_addStyle('.overlay {height: 0%;width: 100%;position: fixed;z-index: 1;top: 0;
 GM_config.init(
     {
         'id': 'MyConfig', // The id used for this instance of GM_config
+        'title': 'BettertOLP Settings',
         'fields': // Fields object
         {
             'beforeuser': // This is the id of the field
@@ -56,10 +81,10 @@ GM_config.init(
                 'default': ']' // Default value if user doesn't change it
             },
             'theme': {
-                'label': 'Theme', // Appears next to field
+                'label': 'tOLP theme', // Appears next to field
                 'type': 'radio', // Makes this setting a series of radio elements
                 'options': ['Disabled', 'Rain'], // Possible choices
-                'default': 'Blue' // Default value if user doesn't change it
+                'default': 'Disabled' // Default value if user doesn't change it
             },
             'dtoken': {
                 //'label': 'Discord token', // Appears next to field
@@ -72,6 +97,13 @@ GM_config.init(
                 'type': 'select', // Makes this setting a dropdown
                 'options': ['Square', 'Circle'], // Possible choices
                 'default': 'Square' // Default value if user doesn't change it
+            },
+            'dserver':
+            {
+                'label': 'Discord server', // Appears next to field
+                'type': 'select', // Makes this setting a dropdown
+                'options': ['tOLP', 'VVVVVV'], // Possible choices
+                'default': 'tOLP' // Default value if user doesn't change it
             }
         },
         'events': // Callback functions object
@@ -81,7 +113,8 @@ GM_config.init(
             //'save': function() { alert('onSave()'); },
             'close': function() { closeNav(); },
             //'reset': function() { alert('onReset()'); }
-        }
+        },
+        'css': '#MyConfig { background: rgba(255,255,255,0.6)!important;}' // nop
     }
 );
 
@@ -93,6 +126,7 @@ var afteruser = GM_config.get('afteruser');
 var dtoken = GM_config.get('dtoken');
 var theme = GM_config.get('theme');
 var avatart = GM_config.get('avatart');
+var dserver = GM_config.get('dserver');
 
 (function() {
     var autoLink,
@@ -160,106 +194,115 @@ function loadScript(url, callback)
 }
 
 //Shoutbox
-//Add shoutbox bar
-$("#main_content_section").append('<div class="shout cat_bar"><h3 class="catbg">Discord Shoutbox (Logging in...)</h3></div>');
-//Add content
-$("#main_content_section").append('<span class="clear upperframe"><span></span></span><div class="shout"><div class="roundframe"><div class="innerframe"><p>Logging in... (This may take some time.)</p><div class="message-wrap"></div><div class="dinput"></div><br><br></div></div></div></div><span class="lowerframe"><span></span></span><center><span>Token: <div class="tokenin"></div></span></center>');
-//Set some css for the scrollbar
-$('.message-wrap').css("overflow-y", "scroll");
-$('.message-wrap').css("height", "100px");
-$(".tokenin").append('<input type="password" placeholder="Discord token here" class="tokeninput"/>');
-$('.tokeninput').css("width", "100%");
-$('.tokeninput').css("text-align", "center");
-$(".tokeninput")[0].value = GM_config.get('dtoken');
-$('body').on("keydown", '.tokeninput', function(e) {
-    if(e.which == 13) {
-        GM_config.fields.dtoken.value = $(".tokeninput")[0].value;
-        GM_config.save();
-        GM_config.fields.dtoken.reload();
-        alert("You may need to reload the page for your token to be set.");
-    }
-});
-//Load discord.js
-loadScript("https://rawgit.com/hydrabolt/discord.js/webpack/discord.master.js",
-           function() {
-    const client = new Discord.Client();
-    var channelvar;
-    var guildvar;
-    client.on('ready', () => {
-        console.log(`Logged in as ${client.user.tag}!`);
-        guildvar = client.guilds.find("name", "tOLP");
-        if (guildvar === null) {
+
+if (dserver === "tOLP") {
+    dserverid = "153368829160849408";
+} else if (dserver === "VVVVVV") {
+    dserverid = "332236951472308225";
+}
+//if (window.location.href.split("://")[1] === "tolp.nl/forum/index.php" || window.location.href.split("://")[1]=== "tolp.nl/forum/" || window.location.href.split("://")[1] === "distractionware.com/forum/index.php" || window.location.href.split("://")[1]=== "distractionware.com/forum/forum/") {
+if (window.location.href.split("://")[1] === "tolp.nl/forum/index.php" || window.location.href.split("://")[1]=== "tolp.nl/forum/") {
+    //Add shoutbox bar
+    $("#main_content_section").append('<div class="shout cat_bar"><h3 class="catbg">Discord Shoutbox (Logging in...)</h3></div>');
+    //Add content
+    $("#main_content_section").append('<span class="clear upperframe"><span></span></span><div class="shout"><div class="roundframe"><div class="innerframe"><p>Logging in... (This may take some time.)</p><div class="message-wrap"></div><div class="dinput"></div><br><br></div></div></div></div><span class="lowerframe"><span></span></span><center><span>Token: <div class="tokenin"></div></span></center>');
+    //Set some css for the scrollbar
+    $('.message-wrap').css("overflow-y", "scroll");
+    $('.message-wrap').css("height", "100px");
+    $(".tokenin").append('<input type="password" placeholder="Discord token here" class="tokeninput"/>');
+    $('.tokeninput').css("width", "100%");
+    $('.tokeninput').css("text-align", "center");
+    $(".tokeninput")[0].value = GM_config.get('dtoken');
+    $('body').on("keydown", '.tokeninput', function(e) {
+        if(e.which == 13) {
+            GM_config.fields.dtoken.value = $(".tokeninput")[0].value;
+            GM_config.save();
+            GM_config.fields.dtoken.reload();
+            alert("You may need to reload the page for your token to be set.");
+        }
+    });
+    //Load discord.js
+    loadScript("https://rawgit.com/hydrabolt/discord.js/webpack/discord.master.js",
+               function() {
+        const client = new Discord.Client();
+        var channelvar;
+        var guildvar;
+        client.on('ready', () => {
+            console.log(`Logged in as ${client.user.tag}!`);
+            guildvar = client.guilds.find("id", dserverid);
+            if (guildvar === null) {
+                $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (Error!)";
+                $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "You're not on the selected discord server.";
+            } else {
+                channelvar = guildvar.channels.array()[0];
+                $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (" + client.user.tag + ")";
+                $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "Logged in!";
+
+
+                $(".dinput").append('<input type="text" placeholder="Message #general" class="search"/>');
+                $('body').on("keydown", '.search', function(e) {
+                    if(e.which == 13) {
+                        if ($(".search")[0].value !== "") {
+                            channelvar.send($(".search")[0].value);
+                            $(".search")[0].value = "";
+                        }
+                    }
+                });
+            }
+        });
+        client.on('message', msg => {
+            function checkURL(url) {
+                return(url.match(/\.(jpeg|jpg|gif|png)$/) !== null);
+            }
+            if (guildvar !== null) {
+                if (msg.channel.id === channelvar.id) {
+                    var color = msg.member.displayHexColor;
+                    var displayname;
+                    if (msg.member.nickname !== null) {
+                        displayname = "<abbr title='" + msg.author.username + "'>" + escapeHTML(msg.member.nickname, true) + "</abbr>";
+                    } else {
+                        displayname = escapeHTML(msg.author.username, true);
+                    }
+                    $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<span class="message" id="' + msg.id + '"><span class="author" style="color:' + color + ';">' + displayname + '</span><span>: <span class="mcontent">' + escapeHTML(msg.cleanContent, true).autoLink() + '</span><span class="edited" style="color:#AAA; font-size: 70%;"></span></span></span><br>');
+                    if (msg.attachments.array()[0] !== undefined) {
+                        if (checkURL(msg.attachments.array()[0].url)) {
+                            //$('.shoutboximg').css("max-width", "%50");
+                            //$('.shoutboximg').css("max-height", "%50");
+                            $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<a href="'+msg.attachments.array()[0].url+'"><img id="imageid" style="max-height: 70%" src="' + msg.attachments.array()[0].url + '"></a><br>');
+                            var img = document.getElementById('imageid');
+                            //or however you get a handle to the IMG
+                            //var width = img.clientWidth;
+                            //var height = img.clientHeight;
+                            img.maxHeight = "50%";
+                        }
+                    }
+                    var y = $(".message-wrap").scrollTop();  //your current y position on the page
+                    $(".message-wrap").scrollTop(y+17);
+                }
+            }
+        });
+        client.on('messageUpdate', (oldmsg, newmsg) => {
+            if (guildvar !== null) {
+                if (oldmsg.channel.id === channelvar.id) {
+                    $("#" + oldmsg.id + " .mcontent")[0].textContent = newmsg.content;
+                    $("#" + oldmsg.id + " .edited")[0].textContent = " (edited)";
+                }
+            }
+        });
+        client.login(dtoken).catch(e => {
             $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (Error!)";
-            $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "You're not on the tOLP discord server.";
-        } else {
-            channelvar = guildvar.channels.array()[0];
-            $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (" + client.user.tag + ")";
-            $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "Logged in!";
+            $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "There was an error logging in. If you haven't already, set your token in the settings tab.";
 
-
-            $(".dinput").append('<input type="text" placeholder="Message #general" class="search"/>');
-            $('body').on("keydown", '.search', function(e) {
-                if(e.which == 13) {
-                    if ($(".search")[0].value !== "") {
-                        channelvar.send($(".search")[0].value);
-                        $(".search")[0].value = "";
-                    }
-                }
-            });
+        });
+        function output(error, token) {
+            if (error) {
+                console.log(`There was an error logging in: ${error}`);
+                return;
+            } else
+                console.log(`Logged in. Token: ${token}`);
         }
     });
-    client.on('message', msg => {
-        function checkURL(url) {
-            return(url.match(/\.(jpeg|jpg|gif|png)$/) !== null);
-        }
-        if (guildvar !== null) {
-            if (msg.channel.id === channelvar.id) {
-                var color = msg.member.displayHexColor;
-                var displayname;
-                if (msg.member.nickname !== null) {
-                    displayname = "<abbr title='" + msg.author.username + "'>" + escapeHTML(msg.member.nickname, true) + "</abbr>";
-                } else {
-                    displayname = escapeHTML(msg.author.username, true);
-                }
-                $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<span class="message" id="' + msg.id + '"><span class="author" style="color:' + color + ';">' + displayname + '</span><span>: <span class="mcontent">' + escapeHTML(msg.cleanContent, true).autoLink() + '</span><span class="edited" style="color:#AAA; font-size: 70%;"></span></span></span><br>');
-                if (msg.attachments.array()[0] !== undefined) {
-                    if (checkURL(msg.attachments.array()[0].url)) {
-                        //$('.shoutboximg').css("max-width", "%50");
-                        //$('.shoutboximg').css("max-height", "%50");
-                        $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<img style="max-width: 50%" src="' + msg.attachments.array()[0].url + '"><br>');
-                        var img = document.getElementById('imageid');
-                        //or however you get a handle to the IMG
-                        //var width = img.clientWidth;
-                        //var height = img.clientHeight;
-                    }
-                }
-                var y = $(".message-wrap").scrollTop();  //your current y position on the page
-                $(".message-wrap").scrollTop(y+17);
-            }
-        }
-    });
-    client.on('messageUpdate', (oldmsg, newmsg) => {
-        if (guildvar !== null) {
-            if (oldmsg.channel.id === channelvar.id) {
-                $("#" + oldmsg.id + " .mcontent")[0].textContent = newmsg.content;
-                $("#" + oldmsg.id + " .edited")[0].textContent = " (edited)";
-            }
-        }
-    });
-    client.login(dtoken).catch(e => {
-        $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (Error!)";
-        $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "There was an error logging in. If you haven't already, set your token in the settings tab.";
-
-    });
-    function output(error, token) {
-        if (error) {
-            console.log(`There was an error logging in: ${error}`);
-            return;
-        } else
-            console.log(`Logged in. Token: ${token}`);
-    }
-});
-
+}
 
 try {
     var str = $("h4")[0].firstChild.textContent;
@@ -277,10 +320,11 @@ switch(avatart) {
         GM_addStyle('img.avatar {border-radius: 50%;}');
         break;
 }
-switch(theme) {
-    case "Rain":
-        //<td class="normal nowrap"><small><span>Views: </span><span>559,902,130</span><br><span>Time: </span><span><span data-nomodify="">2017-08-21 17:33:47</span></span></small></td><td class="normal center"><small>17 users online: <img src="/images/coin.gif" alt="o" title="User donated $8.00">&nbsp;<a href="/?p=profile&amp;id=6549" style="color: #97acef;" class="un">1UPdudes</a>, <a href="/?p=profile&amp;id=8691" style="color: #f185c9;" class="un">Akaginite</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=9964" style="color: #701820;" class="un">Blind Devil</a>, <a href="/?p=profile&amp;id=1980" style="color: #7c60b0;" class="un">Conal</a>, <a href="/?p=profile&amp;id=32234" style="color: #7c60b0;" class="un">Flap master</a>, <a href="/?p=profile&amp;id=306" style="color: #7c60b0;" class="un">Golden Yoshi</a>, <img src="/images/coin.gif" alt="o" title="User donated $50.00">&nbsp;<a href="/?p=profile&amp;id=3471" style="color: #9E197F;" class="un">imamelia</a>, <a href="/?p=profile&amp;id=768" style="color: #7c60b0;" class="un">Kaijyuu</a>, <a href="/?p=profile&amp;id=27645" style="color: #97acef;" class="un">Luansilva12</a>, <a href="/?p=profile&amp;id=27129" style="color: rgb(0, 210, 210);" class="un">Luigi_master1</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.50">&nbsp;<a href="/?p=profile&amp;id=28554" style="color: #97acef;" class="un">Mathos</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=20309" style="color: #E80055;" class="un">Mirann</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=2512" style="color: #744496;" class="un">Nameless</a>, <a href="/?p=profile&amp;id=23778" style="color: #97acef;" class="un">NGB</a>, <a href="/?p=profile&amp;id=27479" style="color: #97acef;" class="un">ThalesMangaka</a>, <a href="/?p=profile&amp;id=9" style="color: #97acef;" class="un">trackftv</a>, <a href="/?p=profile&amp;id=16921" style="color: #7c60b0;" class="un">Wind Fish</a> - Guests: 36 - Bots: 213</small></td><td class="normal right nowrap"><small>Users: 32,234 (1,476 active)<br>Latest: <a href="/?p=profile&amp;id=32234" style="color: #7c60b0;" class="un">Flap master</a></small></td>
-        $(`<table cellpadding="3" cellspacing="3" width="100%"><tr>
+if (tolp) {
+    switch(theme) {
+        case "Rain":
+            //<td class="normal nowrap"><small><span>Views: </span><span>559,902,130</span><br><span>Time: </span><span><span data-nomodify="">2017-08-21 17:33:47</span></span></small></td><td class="normal center"><small>17 users online: <img src="/images/coin.gif" alt="o" title="User donated $8.00">&nbsp;<a href="/?p=profile&amp;id=6549" style="color: #97acef;" class="un">1UPdudes</a>, <a href="/?p=profile&amp;id=8691" style="color: #f185c9;" class="un">Akaginite</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=9964" style="color: #701820;" class="un">Blind Devil</a>, <a href="/?p=profile&amp;id=1980" style="color: #7c60b0;" class="un">Conal</a>, <a href="/?p=profile&amp;id=32234" style="color: #7c60b0;" class="un">Flap master</a>, <a href="/?p=profile&amp;id=306" style="color: #7c60b0;" class="un">Golden Yoshi</a>, <img src="/images/coin.gif" alt="o" title="User donated $50.00">&nbsp;<a href="/?p=profile&amp;id=3471" style="color: #9E197F;" class="un">imamelia</a>, <a href="/?p=profile&amp;id=768" style="color: #7c60b0;" class="un">Kaijyuu</a>, <a href="/?p=profile&amp;id=27645" style="color: #97acef;" class="un">Luansilva12</a>, <a href="/?p=profile&amp;id=27129" style="color: rgb(0, 210, 210);" class="un">Luigi_master1</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.50">&nbsp;<a href="/?p=profile&amp;id=28554" style="color: #97acef;" class="un">Mathos</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=20309" style="color: #E80055;" class="un">Mirann</a>, <img src="/images/coin.gif" alt="o" title="User donated $5.00">&nbsp;<a href="/?p=profile&amp;id=2512" style="color: #744496;" class="un">Nameless</a>, <a href="/?p=profile&amp;id=23778" style="color: #97acef;" class="un">NGB</a>, <a href="/?p=profile&amp;id=27479" style="color: #97acef;" class="un">ThalesMangaka</a>, <a href="/?p=profile&amp;id=9" style="color: #97acef;" class="un">trackftv</a>, <a href="/?p=profile&amp;id=16921" style="color: #7c60b0;" class="un">Wind Fish</a> - Guests: 36 - Bots: 213</small></td><td class="normal right nowrap"><small>Users: 32,234 (1,476 active)<br>Latest: <a href="/?p=profile&amp;id=32234" style="color: #7c60b0;" class="un">Flap master</a></small></td>
+            $(`<table cellpadding="3" cellspacing="3" width="100%"><tr>
 <td height="50">
 <table cellpadding="0" cellspacing="0" width="100%" style="border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;">
 <tbody><tr>
@@ -311,165 +355,190 @@ switch(theme) {
 </tbody></table>
 </td>
 </tr></table>`).insertAfter($(".header")[0]);
-        var currentdate = new Date();
-        var datetime = currentdate.getDate() + "-" + (currentdate.getMonth()+1)  + "-" + currentdate.getFullYear() + " " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
-        $(".currenttime")[0].textContent = datetime;
-        var musername = $(".floatleft")[0].textContent.trim().split(" |")[0].split("Hello ")[1];
-        $(".musername")[0].textContent = musername;
-        var get1 = $.get( "https://tolp.nl/forum/SSI.php?ssi_function=whosOnline", function( data ) {
-            $(".membersonline").html(data);
-            var memberlist = [];
-            for (var i = 0; i < $(".membersonline a").length; i++) {
-                memberlist.push($(".membersonline a")[i]);
-                //console.log($(".membersonline a")[i]);
-            }
-            //stuff
-            var guests = $(".membersonline")[0].textContent.trim().split(" ")[0];
-            $(".guestcount")[0].textContent = guests;
-            var userson = $(".membersonline")[0].textContent.trim().split(", ")[1].split(" (")[0].toLowerCase();
-            $(".usernum")[0].textContent = userson;
-            var botsonline = $(".membersonline")[0].textContent.trim().split(", ")[2].split(" ")[0];
-            $(".botcount")[0].textContent = botsonline;
-            $(".membersonline").html("");
-            for (var a = 0; a < memberlist.length; a++) {
-                $(".membersonline").append(memberlist[a]);
-                if (a !== memberlist.length - 1) {
-                    $(".membersonline").append(", ");
-                } else {
-                    $(".membersonline").append(" ");
+            var currentdate = new Date();
+            var datetime = currentdate.getDate() + "-" + (currentdate.getMonth()+1)  + "-" + currentdate.getFullYear() + " " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+            $(".currenttime")[0].textContent = datetime;
+            var musername = $(".floatleft")[0].textContent.trim().split(" |")[0].split("Hello ")[1];
+            $(".musername")[0].textContent = musername;
+            var get1 = $.get( foruma + "SSI.php?ssi_function=whosOnline", function( data ) {
+                $(".membersonline").html(data);
+                //console.log($(".membersonline"));
+                var memberlist = [];
+                for (var i = 0; i < $(".membersonline a").length; i++) {
+                    memberlist.push($(".membersonline a")[i]);
+                    //console.log($(".membersonline a")[i]);
                 }
-            }
-        });
-        var get2 = $.get( "https://tolp.nl/forum/SSI.php?ssi_function=latestMember", function( data ) {
-            $(".latestmember").html(data);
-            $(".latestmember").html($(".latestmember a"));
-        });
-        var get3 = $.get( "https://tolp.nl/forum/SSI.php?ssi_function=boardStats", function( data ) {
-            $(".usercount").html(data);
-            $(".usercount").html($(".usercount a"));
-        });
-        $.when(get1, get2, get3).done(function() {
-            var outOff = $(".usercount")[0].textContent;
-            var value = $(".usernum")[0].textContent.split(" ")[0];
-            var resulta = (value * 100) / outOff;
-            var result = Math.round(resulta);
-            $(".perconline")[0].textContent = result.toString() + '%';
-        });
-        $('#wrapper').attr('style','width: 100%');
-        $('table.table_list tr').each(function(){
-            if($(this).children('td:empty').length === $(this).children('td').length){
-                $(this).remove(); // or $(this).hide();
-            }
-        });
-        GM_addStyle('.stickybg2, .stickybg {background: rgba(130, 90, 90, 0.30);}');
-        GM_addStyle('blockquote.bbc_standard_quote {background-color: rgba(119, 119, 119, 0.3);}');
-        GM_addStyle('blockquote.bbc_alternate_quote {background-color: rgba(103, 103, 103, 0.30);}');
-        GM_addStyle('.catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background: hsla(225, 30%, 35%, 0.65);}');
-        GM_addStyle('tr.catbg th.first_th {background: hsla(225, 30%, 35%, 0.65);}');
-        GM_addStyle('tr.catbg th.last_th {background: hsla(225, 30%, 35%, 0.65);}');
-        GM_addStyle('h4.titlebg, h3.titlebg {background: none;padding-bottom: 0px;}');
-        GM_addStyle('div.title_bar {background: hsla(225, 30%, 25%, 0.65);padding-right: 9px;margin-right: 0px;margin-bottom: 0px;}');
-        GM_addStyle('.spoiler_head {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
-        GM_addStyle('.spoiler_body {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
-        GM_addStyle('.description, .description_board, .plainbox {border: none; background: hsla(225, 30%, 25%, 0.65);}');
-        GM_addStyle('#forumposts .cat_bar {margin: 0 0 0 0;}');
-        GM_addStyle('span.topslice, span.botslice, span.topslice span, span.botslice span {background: none!important;}');
-        GM_addStyle('input, button, select, textarea {background: hsla(225, 30%, 25%, 0.65);}');
-        GM_addStyle('div.title_barIC h4.titlebg {background: none;}');
-        GM_addStyle('div.title_barIC {background: hsla(225, 30%, 25%, 0.65);}');
-        GM_addStyle('.roundframe {background: none; border-left: none; border-right: none;}');
-        GM_addStyle('span.upperframe, span.upperframe span, span.lowerframe, span.lowerframe span {background: none;}');
-        GM_addStyle('.buttonlist ul li a span {background: none;}');
-        GM_addStyle('.buttonlist ul li a {color: #99FF99; background: none;}');
-        GM_addStyle('.buttonlist ul li a:hover span {background: none;}');
-        GM_addStyle('.buttonlist ul li a:hover {background: none;}');
-        GM_addStyle('.windowbg, #preview_body {background-color: hsla(225, 40%, 12%, 0.7);}');
-        GM_addStyle('#forumposts .windowbg, #preview_body {border: 1px solid #000000;}');
-        GM_addStyle('.header {width: 95%; margin: auto;}');
-        GM_addStyle(".table_list {background-color: black;border-spacing: 1px;}");
-        GM_addStyle('.windowbg2 {background-color: hsla(225, 40%, 12%, 0.7); border: 1px solid #000000;}');
-        GM_addStyle('#forumposts .windowbg2 {border-top: none;}');
-        GM_addStyle('tr.windowbg td, tr.windowbg2 td, tr.approvebg td, tr.highlight2 td {background-color: hsla(225, 40%, 12%, 0.7);}');
-        GM_addStyle('h3.catbg a:link, h3.catbg a:visited, h4.catbg a:link, h4.catbg a:visited, h3.catbg, .table_list tbody.header td, .table_list tbody.header td a {color: #6B8AC7;}');
-        GM_addStyle('h4.catbg, h4.catbg2, h3.catbg, h3.catbg2, .table_list tbody.header td.catbg {background: none;}');
-        GM_addStyle('div.cat_bar {background: hsla(225, 30%, 25%, 0.65);margin-right: 0px;}');
-        GM_addStyle('#content_section {background: rgba(0,0,0,0);padding: 0 10px;}');
-        GM_addStyle('td.normal {background: hsla(225, 40%, 18%, 0.7);}');
-        GM_addStyle('td.normal {padding: 2px 4px !important;}');
-        GM_addStyle('td.rope {padding: 4px 5px 4px; background: hsla(225, 40%, 12%, 0.7);}');
-        GM_addStyle('.right {text-align: right;}');
-        GM_addStyle('.center {text-align: center;}');
-        GM_addStyle('.nowrap {white-space: nowrap;}');
-        GM_addStyle('body {background: #14192A url(https://www.smwcentral.net/html/rainscheme/rainbg.jpg)!important}');
-        GM_addStyle('.table_list tbody.content td.info a.subject, a.new_win:link, a.new_win:visited, a:link, a:visited, a {color: hsl(225, 50%, 65%); font-weight: bold!important; text-decoration: none!important;}');
-        GM_addStyle('a:hover  {color: hsl(225, 50%, 90%)!important;}');
-        GM_addStyle('.header_topbar {background: hsla(225, 30%, 35%, 0.65); border: 1px solid #000000; border-bottom: none;}');
-        GM_addStyle('.header_main {background: hsla(225, 40%, 18%, 0.7); border: 1px solid #000000; border-top: none;}');
-        GM_addStyle('.header_nav {background: hsla(225, 40%, 12%, 0.7); border: 1px solid #000000; border-top: none;}');
-        break;
-    case "Default":
-        $( "#boardindex_table" ).prepend("Tips: " + item + "<br><br>");
-        break;
-        //    case "Mint":
-        //        GM_addStyle('.header_main {background: url(https://atlas.is-pretty.sexy/c563cb.png)}');
-        //        GM_addStyle('.header_nav {background: url(https://atlas.is-pretty.sexy/6535e8.png)}');
-        //        GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i.imgur.com/ESzz8Yz.png)}');
-        //        GM_addStyle('.header_topbar {background: url(https://atlas.is-pretty.sexy/2c2a56.png)}');
-        //        GM_addStyle('.button_submit, .quick_search_token_submit_input {background-color: #2aa969}');
-        //        GM_addStyle('body {background-color: #a0c6a8}');
-        //        GM_addStyle('a.subject {color: #2aa969!important} ');
-        //        GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://atlas.is-pretty.sexy/507f23.png)!important}');
-        //        GM_addStyle('.button_strip_markread, .button_strip_markread span.last {background-image: url(https://atlas.is-pretty.sexy/49e643.png)!important}');
-        //        GM_addStyle('.buttonlist ul li a, .buttonlist ul li a span {background-image: url(https://atlas.is-pretty.sexy/49e643.png)!important}');
-        //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #33663e}');
-        //        GM_addStyle('.poster h4 a {color: #269d62}');
-        //        GM_addStyle('ul.topnav li ul.subnav {background: #055933;border: 1px solid #042f15}');
-        //        GM_addStyle('ul.topnav li ul.subnav li {border-top: 1px solid #1c854b;border-bottom: 1px solid #16663d}');
-        //        GM_addStyle('html ul.topnav li ul.subnav li:hover {background: #0d7136}');
-        //        GM_addStyle('blockquote.bbc_standard_quote {background-color: #cff5cc}');
-        //        GM_addStyle('blockquote.bbc_alternate_quote {background-color: #d9f9ce}');
-        //        GM_addStyle('.dropmenu li a.firstlevel:hover span.firstlevel, .dropmenu li:hover a.firstlevel span.firstlevel, .dropmenu li a.firstlevel:hover, .dropmenu li:hover a.firstlevel, .dropmenu li a.active span.firstlevel, .dropmenu li a.active, .dropmenu li ul {background-image: url(https://atlas.is-pretty.sexy/ba1a28.png)}');
-        //        GM_addStyle('.dropmenu li li a:hover, .dropmenu li li:hover>a {background: #188668}');
-        //        GM_addStyle('.title_bar, tr.catbg th.first_th, .catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background-image: url(https://atlas.is-pretty.sexy/507f23.png)!important}');
-        //        $(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
-        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
-        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').attr("src","https://atlas.is-pretty.sexy/98a1f5.png");
-        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').attr("src","https://atlas.is-pretty.sexy/905f8b.png");
-        //        break;
-        //    case "Red":
-        //        GM_addStyle('tr.catbg, .header_main, .header_nav, ul#menu_nav li.backLava, .header_topbar, .cat_bar, .title_barIC, .button_strip_markread, .buttonlist ul li a {filter: hue-rotate(150deg)}');
-        //        GM_addStyle('.catbg, ul#menu_nav li.backLava, .button_strip_markread span.last, .titlebg, .buttonlist ul li a span {filter: hue-rotate(350deg)}');
-        //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #633}');
-        //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #9d2626}');
-        //        GM_addStyle('body {background-color: #c6a0a0}');
-        //        $(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
-        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').css({filter: "hue-rotate(150deg)"});
-        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
-        //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
-        //        break;
-        //    case "Dark":
-        //        //GM_addStyle('tr.catbg, .header_main, .header_nav, ul#menu_nav li.backLava, .header_topbar, .cat_bar, .title_barIC, .button_strip_markread, .buttonlist ul li a {filter: hue-rotate(150deg)}');
-        //        //GM_addStyle('.catbg, ul#menu_nav li.backLava, .button_strip_markread span.last, .titlebg, .buttonlist ul li a span {filter: hue-rotate(350deg)}');
-        //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #ececec;}');
-        //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #9d2626}');
-        //        GM_addStyle('body {background-color: rgb(60, 60, 60)}');
-        //        GM_addStyle('#content_section {background: #5a5a5a}');
-        //        GM_addStyle('body, td, th, tr {color: #fff}');
-        //        GM_addStyle('tr.windowbg td, tr.windowbg2 td, tr.approvebg td, tr.highlight2 td {background-color: #676767}');
-        //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #ccffc9!important}');
-        //        GM_addStyle('.table_list tbody.content td.children {color: #d0d0d0}');
-        //        GM_addStyle('.windowbg, #preview_body {background-color: #777777}');
-        //        GM_addStyle('.roundframe {background: #888888}');
-        //        GM_addStyle('.header_main {background: url(https://atlas.is-pretty.cool/c02c39.png)}');
-        //        GM_addStyle('.header_nav {background: url(https://atlas.is-pretty.cool/993716.png)}');
-        //        GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i.imgur.com/ESzz8Yz.png)}');
-        //        GM_addStyle('.header_topbar {background: url(https://atlas.is-pretty.cool/f7785d.png)}');
-        //        GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://atlas.is-pretty.cool/9feaac.png)!important}');
-        //$(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
-        //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').css({filter: "hue-rotate(150deg)"});
-        //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
-        //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
-        //        break;
+                //stuff
+                var guests;
+                var str = $(".membersonline")[0].textContent;
+                var regex = /([0-9]+) Guests?/;
+                var match = regex.exec(str);
+                if (match !== null) {
+                    guests = match[1];
+                } else {
+                    guests = 0;
+                }
+                $(".guestcount")[0].textContent = guests;
+                var userson = $(".membersonline")[0].textContent.trim().split(", ")[1].split(" (")[0].toLowerCase();
+                $(".usernum")[0].textContent = userson;
+
+                var str2 = $(".membersonline")[0].textContent.trim().split("\n")[0];
+                var regex2 = /([0-9]+) Spiders?/;
+                var match2 = regex2.exec(str2);
+                var botsonline;
+                if (match2 !== null) {
+                    botsonline = match2[1];
+                } else {
+                    botsonline = 0;
+                }
+                $(".botcount")[0].textContent = botsonline;
+                $(".membersonline").html("");
+                for (var a = 0; a < memberlist.length; a++) {
+                    $(".membersonline").append(memberlist[a]);
+                    if (a !== memberlist.length - 1) {
+                        $(".membersonline").append(", ");
+                    } else {
+                        $(".membersonline").append(" ");
+                    }
+                }
+            });
+            var get2 = $.get( foruma + "SSI.php?ssi_function=latestMember", function( data ) {
+                $(".latestmember").html(data);
+                $(".latestmember").html($(".latestmember a"));
+            });
+            var get3 = $.get( foruma + "SSI.php?ssi_function=boardStats", function( data ) {
+                $(".usercount").html(data);
+                $(".usercount").html($(".usercount a"));
+            });
+            $.when(get1, get2, get3).done(function() {
+                var outOff = $(".usercount")[0].textContent;
+                var value = $(".usernum")[0].textContent.split(" ")[0];
+                var resulta = (value * 100) / outOff;
+                var result = Math.round(resulta);
+                $(".perconline")[0].textContent = result.toString() + '%';
+            });
+            $('#wrapper').attr('style','width: 100%');
+            $('table.table_list tr').each(function(){
+                if($(this).children('td:empty').length === $(this).children('td').length){
+                    $(this).remove(); // or $(this).hide();
+                }
+            });
+            GM_addStyle('blockquote.bbc_standard_quote, blockquote.bbc_alternate_quote {color: #d6d6d6;}');
+            GM_addStyle('.windowbg, #preview_body {color: #fff;}');
+            GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: none!important;}');
+            GM_addStyle('.title_bar, tr.catbg th.first_th, .catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background-image: none!important;}');
+            GM_addStyle('body, td, th, tr {color: #fff;}');
+            GM_addStyle('.windowbg2 {color: #fff;}');
+            GM_addStyle('.stickybg2, .stickybg {background: rgba(130, 90, 90, 0.30);}');
+            GM_addStyle('blockquote.bbc_standard_quote {background-color: rgba(119, 119, 119, 0.3);}');
+            GM_addStyle('blockquote.bbc_alternate_quote {background-color: rgba(103, 103, 103, 0.30);}');
+            GM_addStyle('.catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background: hsla(225, 30%, 35%, 0.65);}');
+            GM_addStyle('tr.catbg th.first_th {background: hsla(225, 30%, 35%, 0.65);}');
+            GM_addStyle('tr.catbg th.last_th {background: hsla(225, 30%, 35%, 0.65);}');
+            GM_addStyle('h4.titlebg, h3.titlebg {background: none;padding-bottom: 0px;}');
+            GM_addStyle('div.title_bar {background: hsla(225, 30%, 25%, 0.65);padding-right: 9px;margin-right: 0px;margin-bottom: 0px;}');
+            GM_addStyle('.spoiler_head {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
+            GM_addStyle('.spoiler_body {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
+            GM_addStyle('.description, .description_board, .plainbox {border: none; background: hsla(225, 30%, 25%, 0.65);}');
+            GM_addStyle('#forumposts .cat_bar {margin: 0 0 0 0;}');
+            GM_addStyle('span.topslice, span.botslice, span.topslice span, span.botslice span {background: none!important;}');
+            GM_addStyle('input, button, select, textarea {background: hsla(225, 30%, 25%, 0.65);}');
+            GM_addStyle('div.title_barIC h4.titlebg {background: none;}');
+            GM_addStyle('div.title_barIC {background: hsla(225, 30%, 25%, 0.65);}');
+            GM_addStyle('.roundframe {background: none; border-left: none; border-right: none;}');
+            GM_addStyle('span.upperframe, span.upperframe span, span.lowerframe, span.lowerframe span {background: none;}');
+            GM_addStyle('.buttonlist ul li a span {background: none;}');
+            GM_addStyle('.buttonlist ul li a {color: #99FF99; background: none;}');
+            GM_addStyle('.buttonlist ul li a:hover span {background: none;}');
+            GM_addStyle('.buttonlist ul li a:hover {background: none;}');
+            GM_addStyle('.windowbg, #preview_body {background-color: hsla(225, 40%, 12%, 0.7);}');
+            GM_addStyle('#forumposts .windowbg, #preview_body {border: 1px solid #000000;}');
+            GM_addStyle('.header {width: 95%; margin: auto;}');
+            GM_addStyle(".table_list {background-color: black;border-spacing: 1px;}");
+            GM_addStyle('.windowbg2 {background-color: hsla(225, 40%, 12%, 0.7); border: 1px solid #000000;}');
+            GM_addStyle('#forumposts .windowbg2 {border-top: none;}');
+            GM_addStyle('tr.windowbg td, tr.windowbg2 td, tr.approvebg td, tr.highlight2 td {background-color: hsla(225, 40%, 12%, 0.7);}');
+            GM_addStyle('h3.catbg a:link, h3.catbg a:visited, h4.catbg a:link, h4.catbg a:visited, h3.catbg, .table_list tbody.header td, .table_list tbody.header td a {color: #6B8AC7;}');
+            GM_addStyle('h4.catbg, h4.catbg2, h3.catbg, h3.catbg2, .table_list tbody.header td.catbg {background: none;}');
+            GM_addStyle('div.cat_bar {background: hsla(225, 30%, 25%, 0.65);margin-right: 0px;}');
+            GM_addStyle('#content_section {background: rgba(0,0,0,0);padding: 0 10px;}');
+            GM_addStyle('td.normal {background: hsla(225, 40%, 18%, 0.7);}');
+            GM_addStyle('td.normal {padding: 2px 4px !important;}');
+            GM_addStyle('td.rope {padding: 4px 5px 4px; background: hsla(225, 40%, 12%, 0.7);}');
+            GM_addStyle('.right {text-align: right;}');
+            GM_addStyle('.center {text-align: center;}');
+            GM_addStyle('.nowrap {white-space: nowrap;}');
+            GM_addStyle('body {background: #14192A url(https://www.smwcentral.net/html/rainscheme/rainbg.jpg)!important}');
+            GM_addStyle('.table_list tbody.content td.info a.subject, a.new_win:link, a.new_win:visited, a:link, a:visited, a {color: hsl(225, 50%, 65%); font-weight: bold!important; text-decoration: none!important;}');
+            GM_addStyle('a:hover  {color: hsl(225, 50%, 90%)!important;}');
+            GM_addStyle('.header_topbar {background: hsla(225, 30%, 35%, 0.65); border: 1px solid #000000; border-bottom: none;}');
+            GM_addStyle('.header_main {background: hsla(225, 40%, 18%, 0.7); border: 1px solid #000000; border-top: none;}');
+            GM_addStyle('.header_nav {background: hsla(225, 40%, 12%, 0.7); border: 1px solid #000000; border-top: none;}');
+            break;
+        case "Default":
+            $( "#boardindex_table" ).prepend("Tips: " + item + "<br><br>");
+            break;
+            //    case "Mint":
+            //        GM_addStyle('.header_main {background: url(https://atlas.is-pretty.sexy/c563cb.png)}');
+            //        GM_addStyle('.header_nav {background: url(https://atlas.is-pretty.sexy/6535e8.png)}');
+            //        GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i.imgur.com/ESzz8Yz.png)}');
+            //        GM_addStyle('.header_topbar {background: url(https://atlas.is-pretty.sexy/2c2a56.png)}');
+            //        GM_addStyle('.button_submit, .quick_search_token_submit_input {background-color: #2aa969}');
+            //        GM_addStyle('body {background-color: #a0c6a8}');
+            //        GM_addStyle('a.subject {color: #2aa969!important} ');
+            //        GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://atlas.is-pretty.sexy/507f23.png)!important}');
+            //        GM_addStyle('.button_strip_markread, .button_strip_markread span.last {background-image: url(https://atlas.is-pretty.sexy/49e643.png)!important}');
+            //        GM_addStyle('.buttonlist ul li a, .buttonlist ul li a span {background-image: url(https://atlas.is-pretty.sexy/49e643.png)!important}');
+            //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #33663e}');
+            //        GM_addStyle('.poster h4 a {color: #269d62}');
+            //        GM_addStyle('ul.topnav li ul.subnav {background: #055933;border: 1px solid #042f15}');
+            //        GM_addStyle('ul.topnav li ul.subnav li {border-top: 1px solid #1c854b;border-bottom: 1px solid #16663d}');
+            //        GM_addStyle('html ul.topnav li ul.subnav li:hover {background: #0d7136}');
+            //        GM_addStyle('blockquote.bbc_standard_quote {background-color: #cff5cc}');
+            //        GM_addStyle('blockquote.bbc_alternate_quote {background-color: #d9f9ce}');
+            //        GM_addStyle('.dropmenu li a.firstlevel:hover span.firstlevel, .dropmenu li:hover a.firstlevel span.firstlevel, .dropmenu li a.firstlevel:hover, .dropmenu li:hover a.firstlevel, .dropmenu li a.active span.firstlevel, .dropmenu li a.active, .dropmenu li ul {background-image: url(https://atlas.is-pretty.sexy/ba1a28.png)}');
+            //        GM_addStyle('.dropmenu li li a:hover, .dropmenu li li:hover>a {background: #188668}');
+            //        GM_addStyle('.title_bar, tr.catbg th.first_th, .catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th {background-image: url(https://atlas.is-pretty.sexy/507f23.png)!important}');
+            //        $(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
+            //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
+            //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').attr("src","https://atlas.is-pretty.sexy/98a1f5.png");
+            //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').attr("src","https://atlas.is-pretty.sexy/905f8b.png");
+            //        break;
+            //    case "Red":
+            //        GM_addStyle('tr.catbg, .header_main, .header_nav, ul#menu_nav li.backLava, .header_topbar, .cat_bar, .title_barIC, .button_strip_markread, .buttonlist ul li a {filter: hue-rotate(150deg)}');
+            //        GM_addStyle('.catbg, ul#menu_nav li.backLava, .button_strip_markread span.last, .titlebg, .buttonlist ul li a span {filter: hue-rotate(350deg)}');
+            //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #633}');
+            //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #9d2626}');
+            //        GM_addStyle('body {background-color: #c6a0a0}');
+            //        $(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
+            //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').css({filter: "hue-rotate(150deg)"});
+            //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
+            //        $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
+            //        break;
+            //    case "Dark":
+            //        //GM_addStyle('tr.catbg, .header_main, .header_nav, ul#menu_nav li.backLava, .header_topbar, .cat_bar, .title_barIC, .button_strip_markread, .buttonlist ul li a {filter: hue-rotate(150deg)}');
+            //        //GM_addStyle('.catbg, ul#menu_nav li.backLava, .button_strip_markread span.last, .titlebg, .buttonlist ul li a span {filter: hue-rotate(350deg)}');
+            //        GM_addStyle('a.new_win:link, a.new_win:visited, a:link, a:visited {color: #ececec;}');
+            //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #9d2626}');
+            //        GM_addStyle('body {background-color: rgb(60, 60, 60)}');
+            //        GM_addStyle('#content_section {background: #5a5a5a}');
+            //        GM_addStyle('body, td, th, tr {color: #fff}');
+            //        GM_addStyle('tr.windowbg td, tr.windowbg2 td, tr.approvebg td, tr.highlight2 td {background-color: #676767}');
+            //        GM_addStyle('.table_list tbody.content td.info a.subject {color: #ccffc9!important}');
+            //        GM_addStyle('.table_list tbody.content td.children {color: #d0d0d0}');
+            //        GM_addStyle('.windowbg, #preview_body {background-color: #777777}');
+            //        GM_addStyle('.roundframe {background: #888888}');
+            //        GM_addStyle('.header_main {background: url(https://atlas.is-pretty.cool/c02c39.png)}');
+            //        GM_addStyle('.header_nav {background: url(https://atlas.is-pretty.cool/993716.png)}');
+            //        GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i.imgur.com/ESzz8Yz.png)}');
+            //        GM_addStyle('.header_topbar {background: url(https://atlas.is-pretty.cool/f7785d.png)}');
+            //        GM_addStyle('.cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://atlas.is-pretty.cool/9feaac.png)!important}');
+            //$(".new_posts").attr("src","https://atlas.is-pretty.sexy/bb6116.gif");
+            //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').css({filter: "hue-rotate(150deg)"});
+            //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
+            //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
+            //        break;
+    }
 }
 function asdf(){
     if (document.body.scrollTop > 100){
@@ -481,9 +550,9 @@ function asdf(){
     }
 }
 setInterval(asdf,1);
-
-$(".header_nav")[0].style.zIndex = "99";
-
+if (tolp) {
+    $(".header_nav")[0].style.zIndex = "99";
+}
 $("#main_menu ul").append('<li id="button_settings" class="firstlevel"><a class="firstlevel settingspane"><span class="last firstlevel">Settings</span></a></li>');
 $( ".settingspane" ).click(function() {
     open();
