@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.3
+// @version      1.3.1
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -10,14 +10,19 @@
 // @match        http://distractionware.com/forum/*
 // @require      https://rawgit.com/sizzlemctwizzle/GM_config/master/gm_config.js
 // @require      https://code.jquery.com/jquery-3.2.1.js
+// @require      https://rawgit.com/lokesh/lightbox2/master/src/js/lightbox.js
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_log
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
+// @grant        GM_getResourceText
+// @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
 // ==/UserScript==
-var btversion = "1.3";
+var btversion = "1.31";
 
+var lightboxcsssrc = GM_getResourceText ("lightboxcss");
+GM_addStyle(lightboxcsssrc);
 //if (window.location.href.split("://")[1] === "tolp.nl/bettertolp.html") {
 //    $("body").html = "<h1>Changelog:</h1><br>+Added this page";
 //}
@@ -268,7 +273,7 @@ if (window.location.href.split("://")[1] === "tolp.nl/forum/index.php" || window
                         if (checkURL(msg.attachments.array()[0].url)) {
                             //$('.shoutboximg').css("max-width", "%50");
                             //$('.shoutboximg').css("max-height", "%50");
-                            $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<a href="'+msg.attachments.array()[0].url+'"><img id="imageid" style="max-height: 70%" src="' + msg.attachments.array()[0].url + '"></a><br>');
+                            $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<!--<a href="'+msg.attachments.array()[0].url+'">--><a href="' + msg.attachments.array()[0].url + '" data-lightbox="' + msg.id + '" data-title="Open original"><img id="imageid" style="max-height: 70%" src="' + msg.attachments.array()[0].url + '"></a><!--</a>--><br>');
                             var img = document.getElementById('imageid');
                             //or however you get a handle to the IMG
                             //var width = img.clientWidth;
@@ -553,10 +558,16 @@ setInterval(asdf,1);
 if (tolp) {
     $(".header_nav")[0].style.zIndex = "99";
 }
-$("#main_menu ul").append('<li id="button_settings" class="firstlevel"><a class="firstlevel settingspane"><span class="last firstlevel">Settings</span></a></li>');
+
 $( ".settingspane" ).click(function() {
     open();
 });
+
+if (tolp) {
+    $("#main_menu .topnav").append('<li id="button_settings" class="firstlevel"><a class="firstlevel settingspane"><span class="last firstlevel">Settings</span></a></li>');
+} else {
+    $("#main_menu ul#menu_nav.dropmenu").append('<li id="button_settings" class="firstlevel"><a class="firstlevel settingspane"><span class="last firstlevel">Settings</span></a></li>');
+}
 
 $(".header_nav_content #main_menu ul").append('<li class="showunreadposts"><a href="https://tolp.nl/forum/index.php?action=unread">Unread</a></li>');
 
