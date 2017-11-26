@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.3.2
+// @version      1.4
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -22,7 +22,7 @@
 // @grant        GM_getResourceText
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
 // ==/UserScript==
-var btversion = "1.3.2";
+var btversion = "1.4";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
