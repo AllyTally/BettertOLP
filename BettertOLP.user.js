@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.3.1
+// @version      1.3.2
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -11,6 +11,9 @@
 // @require      https://rawgit.com/sizzlemctwizzle/GM_config/master/gm_config.js
 // @require      https://code.jquery.com/jquery-3.2.1.js
 // @require      https://rawgit.com/lokesh/lightbox2/master/src/js/lightbox.js
+// @require      https://rawgit.com/hydrabolt/discord.js/webpack/discord.stable.js
+// @require      https://glaceon.ca/BettertOLP/sanitize-html.js
+// @require      https://twemoji.maxcdn.com/2/twemoji.min.js?2.3.1
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_log
@@ -19,7 +22,7 @@
 // @grant        GM_getResourceText
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
 // ==/UserScript==
-var btversion = "1.31";
+var btversion = "1.3.2";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
@@ -109,6 +112,18 @@ GM_config.init(
                 'type': 'select', // Makes this setting a dropdown
                 'options': ['tOLP', 'VVVVVV'], // Possible choices
                 'default': 'tOLP' // Default value if user doesn't change it
+            },
+            'hideip':
+            {
+                'label': 'Hide IP', // Appears next to field
+                'type': 'checkbox', // Makes this setting a checkbox input
+                'default': false // Default value if user doesn't change it
+            },
+            'emojiparse':
+            {
+                'label': 'Convert Unicode to Twitter/Discord\'s emoji', // Appears next to field
+                'type': 'checkbox', // Makes this setting a checkbox input
+                'default': false // Default value if user doesn't change it
             }
         },
         'events': // Callback functions object
@@ -132,6 +147,8 @@ var dtoken = GM_config.get('dtoken');
 var theme = GM_config.get('theme');
 var avatart = GM_config.get('avatart');
 var dserver = GM_config.get('dserver');
+var hideip = GM_config.get('hideip');
+var emojiparse = GM_config.get('emojiparse');
 
 (function() {
     var autoLink,
@@ -181,22 +198,6 @@ function escapeHTML(s, forAttribute) {
         return ESC_MAP[c];
     });
 }
-function loadScript(url, callback)
-{
-    // Adding the script tag to the head as suggested before
-    var head = document.getElementsByTagName('head')[0];
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = url;
-
-    // Then bind the event to the callback function.
-    // There are several events for cross browser compatibility.
-    script.onreadystatechange = callback;
-    script.onload = callback;
-
-    // Fire the loading
-    head.appendChild(script);
-}
 
 //Shoutbox
 
@@ -227,85 +228,79 @@ if (window.location.href.split("://")[1] === "tolp.nl/forum/index.php" || window
         }
     });
     //Load discord.js
-    loadScript("https://rawgit.com/hydrabolt/discord.js/webpack/discord.master.js",
-               function() {
-        const client = new Discord.Client();
-        var channelvar;
-        var guildvar;
-        client.on('ready', () => {
-            console.log(`Logged in as ${client.user.tag}!`);
-            guildvar = client.guilds.find("id", dserverid);
-            if (guildvar === null) {
-                $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (Error!)";
-                $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "You're not on the selected discord server.";
-            } else {
-                channelvar = guildvar.channels.array()[0];
-                $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (" + client.user.tag + ")";
-                $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "Logged in!";
+    const client = new Discord.Client();
+    var channelvar;
+    var guildvar;
+    client.on('ready', () => {
+        console.log(`Logged in as ${client.user.tag}!`);
+        guildvar = client.channels.find("id", dserverid);
+        if (guildvar === null) {
+            $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (Error!)";
+            $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "You're not on the selected discord server.";
+        } else {
+            channelvar = guildvar;
+            $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (" + client.user.tag + ")";
+            $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "Logged in!";
 
 
-                $(".dinput").append('<input type="text" placeholder="Message #general" class="search"/>');
-                $('body').on("keydown", '.search', function(e) {
-                    if(e.which == 13) {
-                        if ($(".search")[0].value !== "") {
-                            channelvar.send($(".search")[0].value);
-                            $(".search")[0].value = "";
-                        }
+            $(".dinput").append('<input type="text" placeholder="Message #general" class="search"/>');
+            $('body').on("keydown", '.search', function(e) {
+                if(e.which == 13) {
+                    if ($(".search")[0].value !== "") {
+                        //console.log($(".search")[0].value);
+                        channelvar.send($(".search")[0].value);
+                        //channelvar.send("testing shoutbox");
+                        $(".search")[0].value = "";
                     }
-                });
-            }
-        });
-        client.on('message', msg => {
-            function checkURL(url) {
-                return(url.match(/\.(jpeg|jpg|gif|png)$/) !== null);
-            }
-            if (guildvar !== null) {
-                if (msg.channel.id === channelvar.id) {
-                    var color = msg.member.displayHexColor;
-                    var displayname;
-                    if (msg.member.nickname !== null) {
-                        displayname = "<abbr title='" + msg.author.username + "'>" + escapeHTML(msg.member.nickname, true) + "</abbr>";
-                    } else {
-                        displayname = escapeHTML(msg.author.username, true);
-                    }
-                    $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<span class="message" id="' + msg.id + '"><span class="author" style="color:' + color + ';">' + displayname + '</span><span>: <span class="mcontent">' + escapeHTML(msg.cleanContent, true).autoLink() + '</span><span class="edited" style="color:#AAA; font-size: 70%;"></span></span></span><br>');
-                    if (msg.attachments.array()[0] !== undefined) {
-                        if (checkURL(msg.attachments.array()[0].url)) {
-                            //$('.shoutboximg').css("max-width", "%50");
-                            //$('.shoutboximg').css("max-height", "%50");
-                            $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<!--<a href="'+msg.attachments.array()[0].url+'">--><a href="' + msg.attachments.array()[0].url + '" data-lightbox="' + msg.id + '" data-title="Open original"><img id="imageid" style="max-height: 70%" src="' + msg.attachments.array()[0].url + '"></a><!--</a>--><br>');
-                            var img = document.getElementById('imageid');
-                            //or however you get a handle to the IMG
-                            //var width = img.clientWidth;
-                            //var height = img.clientHeight;
-                            img.maxHeight = "50%";
-                        }
-                    }
-                    var y = $(".message-wrap").scrollTop();  //your current y position on the page
-                    $(".message-wrap").scrollTop(y+17);
                 }
+            });
+        }
+    });
+    client.on('message', msg => {
+        function checkURL(url) {
+            return(url.match(/\.(jpeg|jpg|gif|png)$/) !== null);
+        }
+        if (guildvar !== null) {
+            if (msg.channel.id === channelvar.id) {
+                var color = msg.member.displayHexColor;
+                var displayname;
+                if (msg.member.nickname !== null) {
+                    displayname = "<abbr title='" + msg.author.username + "'>" + escapeHTML(msg.member.nickname, true) + "</abbr>";
+                } else {
+                    displayname = escapeHTML(msg.author.username, true);
+                }
+                $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<span class="message" id="' + msg.id + '"><span class="author" style="color:' + color + ';">' + displayname + '</span><span>: <span class="mcontent">' + escapeHTML(msg.cleanContent, true).autoLink() + '</span><span class="edited" style="color:#AAA; font-size: 70%;"></span></span></span><br>');
+                if (msg.attachments.array()[0] !== undefined) {
+                    if (checkURL(msg.attachments.array()[0].url)) {
+                        //$('.shoutboximg').css("max-width", "%50");
+                        //$('.shoutboximg').css("max-height", "%50");
+                        $("#main_content_section .shout .roundframe .innerframe .message-wrap").append('<!--<a href="'+msg.attachments.array()[0].url+'">--><a href="' + msg.attachments.array()[0].url + '" data-lightbox="' + msg.id + '" data-title="Open original"><img id="imageid" style="max-height: 70%" src="' + msg.attachments.array()[0].url + '"></a><!--</a>--><br>');
+                        var img = document.getElementById('imageid');
+                        //or however you get a handle to the IMG
+                        //var width = img.clientWidth;
+                        //var height = img.clientHeight;
+                        img.maxHeight = "50%";
+                    }
+                }
+                var y = $(".message-wrap").scrollTop();  //your current y position on the page
+                $(".message-wrap").scrollTop(y+17);
             }
-        });
-        client.on('messageUpdate', (oldmsg, newmsg) => {
-            if (guildvar !== null) {
-                if (oldmsg.channel.id === channelvar.id) {
+        }
+    });
+    client.on('messageUpdate', (oldmsg, newmsg) => {
+        if (guildvar !== null) {
+            if (oldmsg.channel.id === channelvar.id) {
+                if (oldmsg.content != newmsg.content) {
                     $("#" + oldmsg.id + " .mcontent")[0].textContent = newmsg.content;
                     $("#" + oldmsg.id + " .edited")[0].textContent = " (edited)";
                 }
             }
-        });
-        client.login(dtoken).catch(e => {
-            $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (Error!)";
-            $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "There was an error logging in. If you haven't already, set your token in the settings tab.";
-
-        });
-        function output(error, token) {
-            if (error) {
-                console.log(`There was an error logging in: ${error}`);
-                return;
-            } else
-                console.log(`Logged in. Token: ${token}`);
         }
+    });
+    client.login(dtoken).catch(e => {
+        $("#main_content_section .shout h3")[0].textContent = "Discord Shoutbox (Error!)";
+        $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "There was an error logging in. If you haven't already, set your token in the settings tab.";
+
     });
 }
 
@@ -442,8 +437,10 @@ if (tolp) {
             GM_addStyle('tr.catbg th.last_th {background: hsla(225, 30%, 35%, 0.65);}');
             GM_addStyle('h4.titlebg, h3.titlebg {background: none;padding-bottom: 0px;}');
             GM_addStyle('div.title_bar {background: hsla(225, 30%, 25%, 0.65);padding-right: 9px;margin-right: 0px;margin-bottom: 0px;}');
-            GM_addStyle('.spoiler_head {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
-            GM_addStyle('.spoiler_body {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
+            GM_addStyle('.spoiler_head, .cspoiler_head {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
+            GM_addStyle('.spoiler_body, .cspoiler_body {background-color: hsla(225, 30%, 25%, 0.65); border: none;}');
+            GM_addStyle('.cspoiler_head {margin: 2px 0 2px 0; cursor: pointer; position: relative; display: inline-block; padding: 2px 5px 2px 5px; color: #ccc; text-align: center; font: bold 12px Calibri, Verdana, Arial, sans-serif; border-radius: 5px;}');
+            GM_addStyle('.cspoiler_body {margin: 0; display: none; width: auto; padding: 5px; color: #ccc; border-radius: 5px;}');
             GM_addStyle('.description, .description_board, .plainbox {border: none; background: hsla(225, 30%, 25%, 0.65);}');
             GM_addStyle('#forumposts .cat_bar {margin: 0 0 0 0;}');
             GM_addStyle('span.topslice, span.botslice, span.topslice span, span.botslice span {background: none!important;}');
@@ -457,7 +454,7 @@ if (tolp) {
             GM_addStyle('.buttonlist ul li a:hover span {background: none;}');
             GM_addStyle('.buttonlist ul li a:hover {background: none;}');
             GM_addStyle('.windowbg, #preview_body {background-color: hsla(225, 40%, 12%, 0.7);}');
-            GM_addStyle('#forumposts .windowbg, #preview_body {border: 1px solid #000000;}');
+            GM_addStyle('#forumposts .windowbg, #preview_body {border: 1px solid #000000; border-top: none;}');
             GM_addStyle('.header {width: 95%; margin: auto;}');
             GM_addStyle(".table_list {background-color: black;border-spacing: 1px;}");
             GM_addStyle('.windowbg2 {background-color: hsla(225, 40%, 12%, 0.7); border: 1px solid #000000;}');
@@ -559,15 +556,15 @@ if (tolp) {
     $(".header_nav")[0].style.zIndex = "99";
 }
 
-$( ".settingspane" ).click(function() {
-    open();
-});
-
 if (tolp) {
     $("#main_menu .topnav").append('<li id="button_settings" class="firstlevel"><a class="firstlevel settingspane"><span class="last firstlevel">Settings</span></a></li>');
 } else {
     $("#main_menu ul#menu_nav.dropmenu").append('<li id="button_settings" class="firstlevel"><a class="firstlevel settingspane"><span class="last firstlevel">Settings</span></a></li>');
 }
+
+$(".settingspane").click(function() {
+    open();
+});
 
 $(".header_nav_content #main_menu ul").append('<li class="showunreadposts"><a href="https://tolp.nl/forum/index.php?action=unread">Unread</a></li>');
 
@@ -575,14 +572,31 @@ var poster = $(".poster");
 for (var i = 0; i < poster.length; i++) {
     if ($(".poster h4")[i].textContent.trim() === "Kiwi Alexia ♡") {
         $('<li class="btcreator">BettertOLP Creator</li>').insertAfter($(".poster ul .postgroup")[i]);
+        //}
+        if (tolp) {
+            if ($(".poster")[i] !== undefined) {
+                var icons = $(".poster")[i].children[1].children[7].children[0].children;
+                $('<li><a target="_blank" href="https://soundcloud.com/luigimastermusic/"><div class="fieldicon" style="background-image: url(https://i-need-hugs.in-my.life/b17119.png);margin-left: 3px;" alt="Soundcloud: Invision" title="Soundcloud: Invision"></div></a></li>').insertAfter(icons[icons.length-1]);
+            }
+        }
+    }
+    if (tolp) {
+        if ($(".post_wrapper")[i] !== undefined) {
+            var sig = $(".post_wrapper")[i].children[2].children[2];
+            if (sig !== undefined) {
+                if (sig.children[sig.children.length-2] !== undefined) {
+                    if (sig.children[sig.children.length-2].textContent === "btsig") {
+                        sig.innerHTML = sanitizeHtml(sig.children[sig.children.length-1].textContent, {allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'center', 'span' ]),allowedAttributes: {
+                            a: [ 'href', 'name', 'target' ],
+                            img: [ 'src' ],
+                            '*': [ 'color', 'bgcolor', 'style', 'class', 'id' ]
+                        },});
+                    }
+                }
+            }
+        }
     }
 }
-
-//for (var i = 0; i < poster.length; i++) {
-//    if ($(".poster h4")[i].textContent.trim() === "Kiwi Alexia ♡") {
-//        $('<li class="btcreator">BettertOLP Creator</li>').insertAfter($(".poster ul .postgroup")[i]);
-//    }
-//}
 
 //var ret = GM_xmlhttpRequest({
 //  method: "GET",
@@ -598,3 +612,50 @@ for (var i = 0; i < poster.length; i++) {
 //for (var i = 0; i < $(".poster").length; i++) {
 //    posters.push($(".poster h4 a")[i].href.replace("https://tolp.nl/forum/index.php?action=profile;u=",""));
 //}
+
+$(document).ready(function()
+                  {
+    $('.cspoiler').hide();
+    $('.cspoiler_head').click(function()
+                              {
+        var titel = this.innerHTML;
+        //if(titel.indexOf("<!--") != -1 && titel.indexOf("-->") != -1)
+        //{
+        //  var stac = titel.indexOf("<!--");
+        //  var endc = titel.indexOf("-->");
+        //  var textone = titel.substr(0,stac); // textone should be between the comment tags
+        //  var texttwo = titel.substr(stac+4,(titel.length - 7 - stac)); // texttwo should be the new button label
+        //  this.innerHTML = texttwo + "<!--" + textone + "-->";
+        //}
+        $(this).next('.cspoiler_body').slideToggle(450);
+    });
+});
+
+$( ".post_wrapper" ).wrap( "<div class='collapsepost'></div>" );
+$(".collapsepost").prepend("<a href='#'><center class='tgp'>Toggle Post</center></a>");
+$('.tgp').click(function(event){
+    event.preventDefault();
+    $('.post', $( this ).parent().parent()).toggle();
+    $('.moderatorbar', $( this ).parent().parent()).toggle();
+    $('.poster', $( this ).parent().parent()).toggle();
+    $('.postarea', $( this ).parent().parent()).toggle();
+});
+
+if (hideip) {
+    var ip = $(".moderatorbar a.help");
+    for (var i = 0; i < ip.length; i++) {
+        if (ip[i].textContent !== "Logged") {
+            ip[i].textContent = "IP hidden from view";
+        }
+    }
+}
+
+if (emojiparse) {
+GM_addStyle('.emoji {width: 32px; height: 32px;}');
+var msgarray = $(".inner");
+msgarray.map((e) => {
+    msgarray[e].innerHTML = twemoji.parse(msgarray[e].innerHTML,   function(icon, options) {
+        return 'https://twemoji.maxcdn.com/' + "svg" + '/' + icon + '.svg';
+    });
+});
+}
