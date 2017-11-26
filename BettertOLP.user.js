@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.4
+// @version      1.4.1
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
+// @noframes
+// @run-at       document-idle
 // @match        https://tolp.nl/forum/*
 // @match        http://tolptheme.hol.es/*
 // @match        http://distractionware.com/forum/*
@@ -22,7 +24,7 @@
 // @grant        GM_getResourceText
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
 // ==/UserScript==
-var btversion = "1.4";
+var btversion = "1.4.1";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
@@ -215,7 +217,7 @@ if (window.location.href.split("://")[1] === "tolp.nl/forum/index.php" || window
     //Set some css for the scrollbar
     $('.message-wrap').css("overflow-y", "scroll");
     $('.message-wrap').css("height", "100px");
-    $(".tokenin").append('<input type="password" placeholder="Discord token here" class="tokeninput"/>');
+    $(".tokenin").append('<input type="password" placeholder="Discord token here" class="tokeninput" autocomplete=off/>');
     $('.tokeninput').css("width", "100%");
     $('.tokeninput').css("text-align", "center");
     $(".tokeninput")[0].value = GM_config.get('dtoken');
@@ -243,7 +245,7 @@ if (window.location.href.split("://")[1] === "tolp.nl/forum/index.php" || window
             $("#main_content_section .shout .roundframe .innerframe p")[0].textContent = "Logged in!";
 
 
-            $(".dinput").append('<input type="text" placeholder="Message #general" class="search"/>');
+            $(".dinput").append('<input type="text" placeholder="Message #general" class="search" autocomplete=off/>');
             $('body').on("keydown", '.search', function(e) {
                 if(e.which == 13) {
                     if ($(".search")[0].value !== "") {
@@ -470,7 +472,8 @@ if (tolp) {
             GM_addStyle('.right {text-align: right;}');
             GM_addStyle('.center {text-align: center;}');
             GM_addStyle('.nowrap {white-space: nowrap;}');
-            GM_addStyle('body {background: #14192A url(https://www.smwcentral.net/html/rainscheme/rainbg.jpg)!important}');
+            //GM_addStyle('body {background: #14192A url(https://www.smwcentral.net/html/rainscheme/rainbg.jpg)!important}');
+            GM_addStyle('body {background: #14192A url(https://i-need-hugs.in-my.life/790e0e.jpg)!important}');
             GM_addStyle('.table_list tbody.content td.info a.subject, a.new_win:link, a.new_win:visited, a:link, a:visited, a {color: hsl(225, 50%, 65%); font-weight: bold!important; text-decoration: none!important;}');
             GM_addStyle('a:hover  {color: hsl(225, 50%, 90%)!important;}');
             GM_addStyle('.header_topbar {background: hsla(225, 30%, 35%, 0.65); border: 1px solid #000000; border-bottom: none;}');
