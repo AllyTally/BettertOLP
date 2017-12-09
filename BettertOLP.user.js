@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.4.1
+// @version      1.4.2
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -11,7 +11,8 @@
 // @match        http://tolptheme.hol.es/*
 // @match        http://distractionware.com/forum/*
 // @require      https://rawgit.com/sizzlemctwizzle/GM_config/master/gm_config.js
-// @require      https://code.jquery.com/jquery-3.2.1.js
+// @require      https://tolp.nl/forum/jquery-3.2.1.min.js
+// @require      https://code.jquery.com/ui/1.12.1/jquery-ui.js
 // @require      https://rawgit.com/lokesh/lightbox2/master/src/js/lightbox.js
 // @require      https://rawgit.com/hydrabolt/discord.js/webpack/discord.stable.js
 // @require      https://glaceon.ca/BettertOLP/sanitize-html.js
@@ -23,11 +24,18 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getResourceText
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
+
 // ==/UserScript==
-var btversion = "1.4.1";
+var btversion = "1.4.2";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
+
+var empicktwsrc = GM_getResourceText ("empicktw");
+GM_addStyle(empicktwsrc);
+
+var empicksrc = GM_getResourceText ("empick");
+GM_addStyle(empicksrc);
 //if (window.location.href.split("://")[1] === "tolp.nl/bettertolp.html") {
 //    $("body").html = "<h1>Changelog:</h1><br>+Added this page";
 //}
@@ -93,7 +101,7 @@ GM_config.init(
             'theme': {
                 'label': 'tOLP theme', // Appears next to field
                 'type': 'radio', // Makes this setting a series of radio elements
-                'options': ['Disabled', 'Rain'], // Possible choices
+                'options': ['Disabled', 'Rain', 'Lavender'], // Possible choices
                 'default': 'Disabled' // Default value if user doesn't change it
             },
             'dtoken': {
@@ -210,10 +218,11 @@ if (dserver === "tOLP") {
 }
 //if (window.location.href.split("://")[1] === "tolp.nl/forum/index.php" || window.location.href.split("://")[1]=== "tolp.nl/forum/" || window.location.href.split("://")[1] === "distractionware.com/forum/index.php" || window.location.href.split("://")[1]=== "distractionware.com/forum/forum/") {
 if (window.location.href.split("://")[1] === "tolp.nl/forum/index.php" || window.location.href.split("://")[1]=== "tolp.nl/forum/") {
+    $("#main_content_section").append('<div id="draggable"></div>');
     //Add shoutbox bar
-    $("#main_content_section").append('<div class="shout cat_bar"><h3 class="catbg">Discord Shoutbox (Logging in...)</h3></div>');
+    $("#main_content_section #draggable").append('<div class="shout cat_bar"><h3 class="catbg">Discord Shoutbox (Logging in...)</h3></div>');
     //Add content
-    $("#main_content_section").append('<span class="clear upperframe"><span></span></span><div class="shout"><div class="roundframe"><div class="innerframe"><p>Logging in... (This may take some time.)</p><div class="message-wrap"></div><div class="dinput"></div><br><br></div></div></div></div><span class="lowerframe"><span></span></span><center><span>Token: <div class="tokenin"></div></span></center>');
+    $("#main_content_section #draggable").append('<span class="clear upperframe"><span></span></span><div class="shout"><div class="roundframe"><div class="innerframe"><p>Logging in... (This may take some time.)</p><div class="message-wrap"></div><div class="dinput"></div><br><br></div></div></div></div><span class="lowerframe"><span></span></span><center><span>Token: <div class="tokenin"></div></span></center>');
     //Set some css for the scrollbar
     $('.message-wrap').css("overflow-y", "scroll");
     $('.message-wrap').css("height", "100px");
@@ -479,6 +488,13 @@ if (tolp) {
             GM_addStyle('.header_topbar {background: hsla(225, 30%, 35%, 0.65); border: 1px solid #000000; border-bottom: none;}');
             GM_addStyle('.header_main {background: hsla(225, 40%, 18%, 0.7); border: 1px solid #000000; border-top: none;}');
             GM_addStyle('.header_nav {background: hsla(225, 40%, 12%, 0.7); border: 1px solid #000000; border-top: none;}');
+            GM_addStyle('.lockedbg2, .userlockedbg2, .lockedbg, .userlockedbg {background: #ff19193d;}');
+            GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i-need-hugs.in-my.life/22a296.png);}');
+            GM_addStyle('ul.topnav li a {text-shadow: none;}');
+            GM_addStyle('.quick_search_token_submit_input {background: hsla(225, 30%, 35%, 1) url(https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/vertex_image/quick_search_token_icon.png);}');
+            GM_addStyle('.quick_search_token_submit_input:hover {background: hsla(225, 30%, 35%, 1) url(https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/vertex_image/quick_search_token_icon.png);}');
+            GM_addStyle('a.subject {color: #788ed0!important;}');
+            GM_addStyle('table.table_grid td {border-bottom: 1px solid #000;border-right: 1px solid #000;}');
             break;
         case "Default":
             $( "#boardindex_table" ).prepend("Tips: " + item + "<br><br>");
@@ -543,22 +559,53 @@ if (tolp) {
             //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/on.png"]').css({filter: "hue-rotate(150deg)"});
             //$('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/new_some.png"]').css({filter: "hue-rotate(150deg)"});
             //        break;
+        case "Lavender":
+            GM_addStyle('body {background-color: #aaa0c6;');
+            GM_addStyle('a:link, a:visited {color: #7b577d;}');
+            GM_addStyle('a.subject {color: #9c2aa9!important;}');
+            GM_addStyle('.header_main {background: url(https://i-need-hugs.in-my.life/d9085c.png)}');
+            GM_addStyle('.header_nav {background: url(https://i-need-hugs.in-my.life/15c411.png)}');
+            GM_addStyle('.header_topbar {background: url(https://i-need-hugs.in-my.life/57c0b8.png)}');
+            GM_addStyle('ul#menu_nav li.backLava {background-image: url(https://i-need-hugs.in-my.life/a09235.png);}');
+            GM_addStyle('ul.topnav li a {text-shadow: none;}');
+            GM_addStyle('.quick_search_token_submit_input {background: #8f7cb3 url(https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/vertex_image/quick_search_token_icon.png);}');
+            GM_addStyle('.quick_search_token_submit_input:hover {background: #8f7cb3 url(https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/vertex_image/quick_search_token_icon.png);}');
+            GM_addStyle('.catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th, .catbg, .catbg2, tr.catbg td, tr.catbg2 td, tr.catbg th, tr.catbg2 th, .cat_bar, .catbg, .title_barIC, .titlebg {background-image: url(https://i-need-hugs.in-my.life/e63f05.png)!important}');
+            GM_addStyle('.button_strip_markread, .button_strip_markread span.last {background-image: url(https://i-need-hugs.in-my.life/96c70d.png)!important}');
+            GM_addStyle('.dropmenu li ul, .buttonlist ul li a, .buttonlist ul li a span, .dropmenu li a.firstlevel:hover span.firstlevel, .dropmenu li:hover a.firstlevel span.firstlevel, .dropmenu li a.firstlevel:hover, .dropmenu li:hover a.firstlevel, .dropmenu li a.active span.firstlevel, .dropmenu li a.active, .dropmenu li ul {background-image: url(https://i-need-hugs.in-my.life/96c70d.png)!important}');
+            GM_addStyle('blockquote.bbc_standard_quote {background-color: #e3ccf5;}');
+            GM_addStyle('.poster h4 a {color: #a54dc7;}');
+            GM_addStyle('blockquote.bbc_alternate_quote {background-color: #eacef9;}');
+            GM_addStyle('.dropmenu li li a:hover, .dropmenu li li:hover>a {background: #b98bc1;}');
+            GM_addStyle('table.table_grid thead tr.catbg th {background-image: url(https://i-need-hugs.in-my.life/e63f05.png)!important;}');
+            $('img[src="https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/english-utf8/new.gif"]').attr("src","https://i-need-hugs.in-my.life/ca657f.png");
+            $( "#boardindex_table" ).prepend("Tips: " + item + "<br><br>");
+            break;
     }
 }
-function asdf(){
-    if (document.body.scrollTop > 100){
-        $('.header_nav').css('position','fixed').css('top','0');
+if (tolp) {
+GM_addStyle(`.sticky {
+position: fixed;
+top: 0;
+left: 0px;
+}`);
+var $window = $(window),
+    $stickyEl = $('.header_nav'),
+    elTop = $stickyEl.offset().top;
+$window.scroll(function() {
+    $stickyEl.toggleClass('sticky', $window.scrollTop() > elTop);
+    if ($window.scrollTop() > elTop) {
         $('.showunreadposts').show();
     } else {
-        $('.header_nav').css('position','static');
         $('.showunreadposts').hide();
     }
+});
 }
-setInterval(asdf,1);
+
+//setInterval(asdf,1);
 if (tolp) {
     $(".header_nav")[0].style.zIndex = "99";
 }
-
 if (tolp) {
     $("#main_menu .topnav").append('<li id="button_settings" class="firstlevel"><a class="firstlevel settingspane"><span class="last firstlevel">Settings</span></a></li>');
 } else {
@@ -570,7 +617,7 @@ $(".settingspane").click(function() {
 });
 
 $(".header_nav_content #main_menu ul").append('<li class="showunreadposts"><a href="https://tolp.nl/forum/index.php?action=unread">Unread</a></li>');
-
+$('.showunreadposts').hide();
 var poster = $(".poster");
 for (var i = 0; i < poster.length; i++) {
     if ($(".poster h4")[i].textContent.trim() === "Kiwi Alexia ♡") {
@@ -579,7 +626,6 @@ for (var i = 0; i < poster.length; i++) {
         if (tolp) {
             if ($(".poster")[i] !== undefined) {
                 var icons = $(".poster")[i].children[1].children[7].children[0].children;
-                $('<li><a target="_blank" href="https://soundcloud.com/luigimastermusic/"><div class="fieldicon" style="background-image: url(https://i-need-hugs.in-my.life/b17119.png);margin-left: 3px;" alt="Soundcloud: Invision" title="Soundcloud: Invision"></div></a></li>').insertAfter(icons[icons.length-1]);
             }
         }
     }
@@ -589,10 +635,10 @@ for (var i = 0; i < poster.length; i++) {
             if (sig !== undefined) {
                 if (sig.children[sig.children.length-2] !== undefined) {
                     if (sig.children[sig.children.length-2].textContent === "btsig") {
-                        sig.innerHTML = sanitizeHtml(sig.children[sig.children.length-1].textContent, {allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'center', 'span' ]),allowedAttributes: {
+                        sig.innerHTML = sanitizeHtml(sig.children[sig.children.length-1].textContent, {allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'center', 'span', 'svg', 'rect', 'defs', 'g', 'path', 'mask', 'circle', 'use', 'style' ]),allowedAttributes: {
                             a: [ 'href', 'name', 'target' ],
                             img: [ 'src' ],
-                            '*': [ 'color', 'bgcolor', 'style', 'class', 'id' ]
+                            '*': [ 'color', 'bgcolor', 'style', 'class', 'id']
                         },});
                     }
                 }
@@ -652,13 +698,94 @@ if (hideip) {
         }
     }
 }
+var avydict = {
+    "-Kiwi Alexia ♡": "https://i.imgur.com/7BLq6bv.gif",
+    "starspire": "https://tolp.nl/forum/index.php?action=dlattach;attach=1298;type=avatar",
+    "fraZ0R": "https://tolp.nl/forum/index.php?action=dlattach;attach=1321;type=avatar",
+    "crazya": "https://tolp.nl/forum/index.php?action=dlattach;attach=1036;type=avatar",
+    "Format": "https://tolp.nl/forum/index.php?action=dlattach;attach=1323;type=avatar",
+    "@Kreator": "https://tolp.nl/forum/index.php?action=dlattach;attach=727;type=avatar",
+    "Info Teddy": "https://tolp.nl/forum/index.php?action=dlattach;attach=1253;type=avatar",
+    "Dav999": "https://tolp.nl/forum/index.php?action=dlattach;attach=1148;type=avatar",
+    "TheJonyMyster": "https://tolp.nl/forum/index.php?action=dlattach;attach=150;type=avatar",
+    "MBCollector672": "https://tolp.nl/forum/index.php?action=dlattach;attach=260;type=avatar",
+    "Coralized2578": "https://tolp.nl/forum/index.php?action=dlattach;attach=1116;type=avatar",
+    "M3TR0": "https://tolp.nl/forum/index.php?action=dlattach;attach=1281;type=avatar",
+    "Shiny K": "https://tolp.nl/forum/index.php?action=dlattach;attach=1288;type=avatar",
+    "SoulBlayzR": "https://tolp.nl/forum/index.php?action=dlattach;attach=1319;type=avatar",
+    "Trdjn": "http://distractionware.com/forum/index.php?action=dlattach;attach=5829;type=avatar",
+    "PJBottomz": "http://distractionware.com/forum/index.php?action=dlattach;attach=901;type=avatar",
+    "Lenare": "http://distractionware.com/forum/index.php?action=dlattach;attach=4694;type=avatar",
+    "RikkianGD": "http://distractionware.com/forum/index.php?action=dlattach;attach=5782;type=avatar",
+    "uugr": "http://distractionware.com/forum/index.php?action=dlattach;attach=5664;type=avatar",
+    "Terry": "http://distractionware.com/forum/index.php?action=dlattach;attach=2;type=avatar",
+    "mrytp": "http://distractionware.com/forum/index.php?action=dlattach;attach=5709;type=avatar",
+    "Mr. Pixelator": "http://distractionware.com/forum/index.php?action=dlattach;attach=5835;type=avatar",
+    "MopeDude": "http://distractionware.com/forum/index.php?action=dlattach;attach=5836;type=avatar",
+    "SteveGamer68": "http://distractionware.com/forum/index.php?action=dlattach;attach=5386;type=avatar",
+    "undefined": "https://tolp.nl/forum/Themes/Vertex-Theme2-0-2-v1-2/images/abm_avatar.gif"
+};
 
-if (emojiparse) {
-GM_addStyle('.emoji {width: 32px; height: 32px;}');
-var msgarray = $(".inner");
-msgarray.map((e) => {
-    msgarray[e].innerHTML = twemoji.parse(msgarray[e].innerHTML,   function(icon, options) {
-        return 'https://twemoji.maxcdn.com/' + "svg" + '/' + icon + '.svg';
+if (dware) {
+    postlist = $(".table_grid tbody tr");
+    postlist.map((e) => {
+        if (postlist[e].children[2].children[0].children[1].childElementCount === 2) {
+            memb = postlist[e].children[2].children[0].children[1].children[0].textContent;
+            if (avydict[memb] !== undefined) {
+                postlist[e].children[1].children[0].setAttribute("src", avydict[memb]);
+                postlist[e].children[1].children[0].setAttribute("style", "max-width:50px;");
+                postlist[e].children[1].setAttribute("style", "padding: 0px;");
+            } else {
+                postlist[e].children[1].children[0].setAttribute("src", avydict["undefined"]);
+                postlist[e].children[1].children[0].setAttribute("style", "max-width:50px;");
+                postlist[e].children[1].setAttribute("style", "padding: 0px;");
+            }
+        } else {
+            //postlist[e].children[0].children[1].textContent.trim()
+            postlist[e].children[1].children[0].setAttribute("src", avydict["undefined"]);
+            postlist[e].children[1].children[0].setAttribute("style", "max-width:50px;");
+            postlist[e].children[1].setAttribute("style", "padding: 0px;");
+        }
     });
-});
+}
+
+//$('#draggable').draggable();
+var msgarray = $(".inner");
+if (emojiparse) {
+    GM_addStyle('.emoji {width: 32px; height: 32px;}');
+    var getmap = $.get("https://glaceon.ca/BettertOLP/simplemap.json", function( data ) {
+        obj = data;
+    });
+    $.when(getmap).done(function() {
+        for (var e = 0; e < msgarray.length; e++) {
+            var s =  msgarray[e].innerHTML;
+            array = s.match(/:(\w+):/g);
+            if (array !== null) {
+                for (var item = 0; item < array.length; item++) {
+                    msgarray[e].innerHTML = s.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
+                }
+            }
+            msgarray[e].innerHTML = twemoji.parse(msgarray[e].innerHTML,   function(icon, options) {
+                return 'https://twemoji.maxcdn.com/2/' + "svg" + '/' + icon + '.svg';
+            });
+        }
+    });
+    $('body').on("keydown", 'textarea#message.editor', function(e) {
+        value = $("textarea#message.editor")[0].value;
+        array = value.match(/:(\w+):/g);
+        if (array !== null) {
+            for (var item = 0; item < array.length; item++) {
+                $("textarea#message.editor")[0].value = value.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
+            }
+        }
+    });
+    $('body').on("keydown", '.quickReplyContent textarea', function(e) {
+        value = $(".quickReplyContent textarea")[0].value;
+        array = value.match(/:(\w+):/g);
+        if (array !== null) {
+            for (var item = 0; item < array.length; item++) {
+                $(".quickReplyContent textarea")[0].value = value.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
+            }
+        }
+    });
 }
