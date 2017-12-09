@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.4.2
+// @version      1.4.3
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -26,16 +26,10 @@
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
 
 // ==/UserScript==
-var btversion = "1.4.2";
+var btversion = "1.4.3";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
-
-var empicktwsrc = GM_getResourceText ("empicktw");
-GM_addStyle(empicktwsrc);
-
-var empicksrc = GM_getResourceText ("empick");
-GM_addStyle(empicksrc);
 //if (window.location.href.split("://")[1] === "tolp.nl/bettertolp.html") {
 //    $("body").html = "<h1>Changelog:</h1><br>+Added this page";
 //}
@@ -758,13 +752,13 @@ if (emojiparse) {
     });
     $.when(getmap).done(function() {
         for (var e = 0; e < msgarray.length; e++) {
-            var s =  msgarray[e].innerHTML;
-            array = s.match(/:(\w+):/g);
-            if (array !== null) {
-                for (var item = 0; item < array.length; item++) {
-                    msgarray[e].innerHTML = s.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
-                }
-            }
+            //var s =  msgarray[e].innerHTML;
+            //array = s.match(/:(\w+):/g);
+            //if (array !== null) {
+            //    for (var item = 0; item < array.length; item++) {
+            //        msgarray[e].innerHTML = s.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
+            //    }
+            //}
             msgarray[e].innerHTML = twemoji.parse(msgarray[e].innerHTML,   function(icon, options) {
                 return 'https://twemoji.maxcdn.com/2/' + "svg" + '/' + icon + '.svg';
             });
