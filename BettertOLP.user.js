@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.4.4
+// @version      1.4.5
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -25,7 +25,7 @@
 // @grant        GM_getResourceText
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
 // ==/UserScript==
-var btversion = "1.4.4";
+var btversion = "1.4.5";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
@@ -805,4 +805,25 @@ if (check_smiley) {
     if(document.getElementById("check_smileys")) {
         document.getElementById("check_smileys").checked = true;
     }
+}
+
+warn = `<div class="errorbox" id="errors">
+<dl>
+<dt>
+<strong style="display: none;" id="error_serious">The following error or errors occurred while posting this message:</strong>
+</dt>
+<dt class="error" id="error_list">
+Warning: You're about to double post.<br>Unless it's been something like a week without replies, please edit your message.
+</dt>
+</dl>
+</div>`;
+
+lastpost = $(".core_posts")[0].children[1].children[0].children[0].textContent.split(": ")[1];
+if (dware) {
+    user = $(".user")[0].children[1].children[0].children[0].textContent;
+} else {
+    user = $(".floatleft")[0].textContent.trim().split(" |")[0].split("Hello ")[1];
+}
+if (lastpost === user) {
+    $(".roundframe").prepend(warn);
 }
