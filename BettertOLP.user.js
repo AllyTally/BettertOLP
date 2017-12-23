@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.4.3
+// @version      1.4.4
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -24,16 +24,22 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getResourceText
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
-
 // ==/UserScript==
-var btversion = "1.4.3";
+var btversion = "1.4.4";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
 //if (window.location.href.split("://")[1] === "tolp.nl/bettertolp.html") {
 //    $("body").html = "<h1>Changelog:</h1><br>+Added this page";
 //}
-
+/*function increasepostarray() {
+    console.log(postarray);
+    GM_setValue('postarray', postarray + 1); // jshint ignore:line
+}
+if ($("#post_confirm_buttons input")[0] !== undefined) {
+    var postarray = GM_getValue('postarray', 0); // jshint ignore:line
+    $("#post_confirm_buttons input")[0].addEventListener("click", increasepostarray);
+}*/
 
 var dware = false;
 var tolp = false;
@@ -128,6 +134,12 @@ GM_config.init(
                 'label': 'Convert Unicode to Twitter/Discord\'s emoji', // Appears next to field
                 'type': 'checkbox', // Makes this setting a checkbox input
                 'default': false // Default value if user doesn't change it
+            },
+            'check_smiley':
+            {
+                'label': 'Auto check the "Don\'t use smilies" box', // Appears next to field
+                'type': 'checkbox', // Makes this setting a checkbox input
+                'default': false // Default value if user doesn't change it
             }
         },
         'events': // Callback functions object
@@ -153,6 +165,7 @@ var avatart = GM_config.get('avatart');
 var dserver = GM_config.get('dserver');
 var hideip = GM_config.get('hideip');
 var emojiparse = GM_config.get('emojiparse');
+var check_smiley = GM_config.get('check_smiley');
 
 (function() {
     var autoLink,
@@ -578,22 +591,22 @@ if (tolp) {
     }
 }
 if (tolp) {
-GM_addStyle(`.sticky {
+    GM_addStyle(`.sticky {
 position: fixed;
 top: 0;
 left: 0px;
 }`);
-var $window = $(window),
-    $stickyEl = $('.header_nav'),
-    elTop = $stickyEl.offset().top;
-$window.scroll(function() {
-    $stickyEl.toggleClass('sticky', $window.scrollTop() > elTop);
-    if ($window.scrollTop() > elTop) {
-        $('.showunreadposts').show();
-    } else {
-        $('.showunreadposts').hide();
-    }
-});
+    var $window = $(window),
+        $stickyEl = $('.header_nav'),
+        elTop = $stickyEl.offset().top;
+    $window.scroll(function() {
+        $stickyEl.toggleClass('sticky', $window.scrollTop() > elTop);
+        if ($window.scrollTop() > elTop) {
+            $('.showunreadposts').show();
+        } else {
+            $('.showunreadposts').hide();
+        }
+    });
 }
 
 //setInterval(asdf,1);
@@ -769,7 +782,9 @@ if (emojiparse) {
         array = value.match(/:(\w+):/g);
         if (array !== null) {
             for (var item = 0; item < array.length; item++) {
-                $("textarea#message.editor")[0].value = value.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
+                if (obj[array[item].substring(1, array[item].length-1)] !== undefined) {
+                    $("textarea#message.editor")[0].value = value.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
+                }
             }
         }
     });
@@ -778,8 +793,16 @@ if (emojiparse) {
         array = value.match(/:(\w+):/g);
         if (array !== null) {
             for (var item = 0; item < array.length; item++) {
-                $(".quickReplyContent textarea")[0].value = value.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
+                if (obj[array[item].substring(1, array[item].length-1)] !== undefined) {
+                    $(".quickReplyContent textarea")[0].value = value.replace(array[item], obj[array[item].substring(1, array[item].length-1)]);
+                }
             }
         }
     });
+}
+
+if (check_smiley) {
+    if(document.getElementById("check_smileys")) {
+        document.getElementById("check_smileys").checked = true;
+    }
 }
