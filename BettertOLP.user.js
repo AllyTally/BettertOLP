@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.4.5
+// @version      1.4.6
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
@@ -25,7 +25,7 @@
 // @grant        GM_getResourceText
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
 // ==/UserScript==
-var btversion = "1.4.5";
+var btversion = "1.4.6";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
@@ -140,6 +140,12 @@ GM_config.init(
                 'label': 'Auto check the "Don\'t use smilies" box', // Appears next to field
                 'type': 'checkbox', // Makes this setting a checkbox input
                 'default': false // Default value if user doesn't change it
+            },
+            'remsmiley':
+            {
+                'label': 'Remove the smilies box', // Appears next to field
+                'type': 'checkbox', // Makes this setting a checkbox input
+                'default': false // Default value if user doesn't change it
             }
         },
         'events': // Callback functions object
@@ -166,6 +172,7 @@ var dserver = GM_config.get('dserver');
 var hideip = GM_config.get('hideip');
 var emojiparse = GM_config.get('emojiparse');
 var check_smiley = GM_config.get('check_smiley');
+var remsmiley = GM_config.get('remsmiley');
 
 (function() {
     var autoLink,
@@ -669,11 +676,9 @@ for (var i = 0; i < poster.length; i++) {
 //    posters.push($(".poster h4 a")[i].href.replace("https://tolp.nl/forum/index.php?action=profile;u=",""));
 //}
 
-$(document).ready(function()
-                  {
+$(document).ready(function() {
     $('.cspoiler').hide();
-    $('.cspoiler_head').click(function()
-                              {
+    $('.cspoiler_head').click(function() {
         var titel = this.innerHTML;
         //if(titel.indexOf("<!--") != -1 && titel.indexOf("-->") != -1)
         //{
@@ -684,6 +689,19 @@ $(document).ready(function()
         //  this.innerHTML = texttwo + "<!--" + textone + "-->";
         //}
         $(this).next('.cspoiler_body').slideToggle(450);
+    });
+    $('.spoiler').hide();
+    $('.spoiler_head').click(function() {
+        var titel = this.innerHTML;
+        if(titel.indexOf("<!--") != -1 && titel.indexOf("-->") != -1)
+        {
+          var stac = titel.indexOf("<!--");
+          var endc = titel.indexOf("-->");
+          var textone = titel.substr(0,stac); // textone should be between the comment tags
+          var texttwo = titel.substr(stac+4,(titel.length - 7 - stac)); // texttwo should be the new button label
+          this.innerHTML = texttwo + "<!--" + textone + "-->";
+        }
+        $(this).next('.spoiler_body').slideToggle(450);
     });
 });
 
@@ -817,13 +835,20 @@ Warning: You're about to double post.<br>Unless it's been something like a week 
 </dt>
 </dl>
 </div>`;
-
-lastpost = $(".core_posts")[0].children[1].children[0].children[0].textContent.split(": ")[1];
-if (dware) {
-    user = $(".user")[0].children[1].children[0].children[0].textContent;
-} else {
-    user = $(".floatleft")[0].textContent.trim().split(" |")[0].split("Hello ")[1];
+if ($(".core_posts")[0] !== undefined) {
+    lastpost = $(".core_posts")[0].children[1].children[0].children[0].textContent.split(": ")[1];
+    if (dware) {
+        user = $(".user")[0].children[1].children[0].children[0].textContent;
+    } else {
+        user = $(".floatleft")[0].textContent.trim().split(" |")[0].split("Hello ")[1];
+    }
+    if (lastpost === user) {
+        $(".roundframe").prepend(warn);
+    }
 }
-if (lastpost === user) {
-    $(".roundframe").prepend(warn);
+
+if (remsmiley) {
+    if ($("#smileyBox_message")[0] !== undefined) {
+        $("#smileyBox_message").remove();
+    }
 }
