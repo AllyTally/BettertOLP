@@ -14,7 +14,7 @@
 // @require      https://tolp.nl/forum/jquery-3.2.1.min.js
 // @require      https://code.jquery.com/ui/1.12.1/jquery-ui.js
 // @require      https://rawgit.com/lokesh/lightbox2/master/src/js/lightbox.js
-// @require      https://rawgit.com/hydrabolt/discord.js/webpack/discord.stable.js
+// @require      https://rawgit.com/discordjs/discord.js/webpack/discord.stable.js
 // @require      https://glaceon.ca/BettertOLP/sanitize-html.js
 // @require      https://twemoji.maxcdn.com/2/twemoji.min.js?2.3.1
 // @grant        GM_getValue
