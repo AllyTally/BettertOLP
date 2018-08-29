@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BettertOLP
 // @namespace    https://tolp.nl/forum/index.php?topic=3809
-// @version      1.4.6
+// @version      1.4.7
 // @GM_updatingEnabled true
 // @description  Adds more features to the tOLP forums!
 // @author       -Kiwi Alexia
