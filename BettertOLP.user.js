@@ -25,7 +25,7 @@
 // @grant        GM_getResourceText
 // @resource     lightboxcss  https://rawgit.com/lokesh/lightbox2/master/src/css/lightbox.css
 // ==/UserScript==
-var btversion = "1.4.6";
+var btversion = "1.4.7";
 
 var lightboxcsssrc = GM_getResourceText ("lightboxcss");
 GM_addStyle(lightboxcsssrc);
